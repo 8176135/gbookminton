@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { PageProps } from './$types';
+	import LocalDate from '$lib/components/LocalDate.svelte';
 
 	let { data }: PageProps = $props();
 	let events = $derived(data.events);
@@ -43,14 +44,14 @@
 						<tr class="transition hover:bg-gray-800/30">
 							<td class="px-6 py-4 font-medium text-white">{ev.title}</td>
 							<td class="px-6 py-4"
-								>{new Date(ev.date).toLocaleString()}
+								><LocalDate date={ev.date} />
 								<span class="text-xs text-gray-500">({ev.duration} min)</span></td
 							>
 							<td class="px-6 py-4">{ev.location}</td>
 							<td class="px-6 py-4">{ev.capacity}</td>
 							<td class="px-6 py-4">
 								<div class="font-medium text-emerald-400">${(ev.cost / 100).toFixed(2)}</div>
-								<div class="text-xs text-red-400">{new Date(ev.deadline).toLocaleString()}</div>
+								<div class="text-xs text-red-400"><LocalDate date={ev.deadline} /></div>
 							</td>
 							<td class="px-6 py-4 text-right">
 								<a href="/admin/events/{ev.id}" class="text-indigo-400 hover:text-indigo-300"

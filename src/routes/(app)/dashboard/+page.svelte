@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { PageProps } from './$types';
+	import LocalDate from '$lib/components/LocalDate.svelte';
 
 	let { data }: PageProps = $props();
 	let user = $derived(data.user);
@@ -56,7 +57,7 @@
 				>
 					<h3 class="mb-1 text-lg font-bold text-white">{ev.title}</h3>
 					<p class="mb-4 text-sm text-gray-400">
-						{new Date(ev.date).toLocaleString()} • {ev.duration} mins
+						<LocalDate date={ev.date} /> • {ev.duration} mins
 					</p>
 
 					<div class="mb-6 grow space-y-2 text-sm text-gray-300">
@@ -73,7 +74,7 @@
 						<p>
 							<span class="font-medium text-gray-500">Deadline:</span>
 							<span class={deadlinePassed ? 'text-red-400 line-through' : ''}
-								>{new Date(ev.deadline).toLocaleString()}</span
+								><LocalDate date={ev.deadline} /></span
 							>
 						</p>
 					</div>

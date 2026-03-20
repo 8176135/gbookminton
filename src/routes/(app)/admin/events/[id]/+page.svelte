@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { PageProps } from './$types';
+	import LocalDate from '$lib/components/LocalDate.svelte';
 
 	let { data }: PageProps = $props();
 	let ev = $derived(data.event);
@@ -28,7 +29,7 @@
 			>
 			<h1 class="text-3xl font-bold tracking-tight text-white">{ev.title}</h1>
 			<p class="text-gray-400">
-				{new Date(ev.date).toLocaleString()} • {ev.location} • {ev.duration} mins
+				<LocalDate date={ev.date} /> • {ev.location} • {ev.duration} mins
 			</p>
 			<div class="mt-2 text-sm font-medium text-emerald-400">
 				Cost: ${(ev.cost / 100).toFixed(2)}
