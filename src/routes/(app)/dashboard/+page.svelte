@@ -6,7 +6,7 @@
 	let user = $derived(data.user);
 	let events = $derived(data.events);
 	let statusMap = $derived(data.signupStatusMap);
-	let capacityMap = $derived(data.capacityMap);
+	let enrollmentCountMap = $derived(data.enrollmentCountMap);
 
 	let loadingIds = $state<Record<string, boolean>>({});
 </script>
@@ -46,7 +46,7 @@
 
 		<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
 			{#each events as ev}
-				{@const enrolled = capacityMap[ev.id] || 0}
+				{@const enrolled = enrollmentCountMap[ev.id] || 0}
 				{@const status = statusMap[ev.id]}
 				{@const isFull = enrolled >= ev.capacity}
 				{@const deadlinePassed = new Date(ev.deadline).getTime() < Date.now()}

@@ -32,20 +32,20 @@ export const load = (async ({ locals }) => {
         count: sql<number>`count(${eventSignup.id})`
     })
         .from(eventSignup)
-        .where(and(eq(eventSignup.status, 'listed'), eq(eventSignup.status, 'locked'))) // waitlist doesn't count towards capacity
+        .where(sql`${eventSignup.status} IN ('listed', 'locked')`) // waitlist doesn't count towards capacity
         .groupBy(eventSignup.eventId);
 
     const enrollmentCounts = await query;
-    const capacityMap: Record<string, number> = {};
+    const enrollmentCountMap: Record<string, number> = {};
     for (const count of enrollmentCounts) {
-        capacityMap[count.eventId] = count.count;
+        enrollmentCountMap[count.eventId] = count.count;
     }
 
     return {
         user: currentUser,
         events: upcomingEvents,
         signupStatusMap,
-        capacityMap
+        enrollmentCountMap
     };
 }) satisfies PageServerLoad;
 

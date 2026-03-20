@@ -1,7 +1,27 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { onMount } from 'svelte';
 
 	let loading = $state(false);
+	let timezone = $state('');
+	let utcDate = $state('');
+	let utcDeadline = $state('');
+
+	onMount(() => {
+		timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+	});
+
+	const handleSync = (e: Event) => {
+		const target = e.target as HTMLInputElement;
+		const date = new Date(target.value);
+		if (!isNaN(date.getTime())) {
+			if (target.name === 'date_local') {
+				utcDate = date.toISOString();
+			} else if (target.name === 'deadline_local') {
+				utcDeadline = date.toISOString();
+			}
+		}
+	};
 </script>
 
 <svelte:head>
@@ -15,6 +35,13 @@
 				>← Back to Dashboard</a
 			>
 			<h1 class="text-3xl font-bold tracking-tight text-white">Create New Event</h1>
+			{#if timezone}
+				<p class="mt-2 text-sm text-gray-500">
+					Detecting time and deadline in your timezone: <span class="font-semibold text-indigo-400"
+						>{timezone}</span
+					>
+				</p>
+			{/if}
 		</header>
 
 		<div class="rounded-2xl border border-gray-800 bg-gray-900/50 p-6 shadow-2xl backdrop-blur-xl">
@@ -29,6 +56,10 @@
 				}}
 				class="space-y-5"
 			>
+				<input type="hidden" name="timezone" value={timezone} />
+				<input type="hidden" name="date" value={utcDate} />
+				<input type="hidden" name="deadline" value={utcDeadline} />
+
 				<div>
 					<label for="title" class="mb-1.5 block text-sm font-medium text-gray-300"
 						>Event Title</label
@@ -45,14 +76,15 @@
 
 				<div class="grid grid-cols-2 gap-4">
 					<div>
-						<label for="date" class="mb-1.5 block text-sm font-medium text-gray-300"
+						<label for="date_local" class="mb-1.5 block text-sm font-medium text-gray-300"
 							>Date & Time</label
 						>
 						<input
 							type="datetime-local"
-							id="date"
-							name="date"
+							id="date_local"
+							name="date_local"
 							required
+							oninput={handleSync}
 							class="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-white transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
 						/>
 					</div>
@@ -134,21 +166,22 @@
 				</div>
 
 				<div>
-					<label for="deadline" class="mb-1.5 block text-sm font-medium text-gray-300"
+					<label for="deadline_local" class="mb-1.5 block text-sm font-medium text-gray-300"
 						>Withdrawal Deadline</label
 					>
 					<input
 						type="datetime-local"
-						id="deadline"
-						name="deadline"
+						id="deadline_local"
+						name="deadline_local"
 						required
+						oninput={handleSync}
 						class="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-white transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
 					/>
 				</div>
 
 				<button
 					type="submit"
-					disabled={loading}
+					disabled={loading || !utcDate || !utcDeadline}
 					class="mt-4 w-full rounded-xl bg-indigo-600 px-4 py-3 font-semibold text-white transition hover:bg-indigo-500 focus:ring-2 focus:ring-indigo-500/50 focus:outline-none disabled:opacity-50"
 				>
 					{loading ? 'Creating...' : 'Create Event'}
