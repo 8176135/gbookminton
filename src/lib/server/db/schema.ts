@@ -62,6 +62,7 @@ export const event = sqliteTable("event", {
     deadline: integer('deadline', { mode: 'timestamp' }).notNull(),
     cost: integer('cost').notNull().default(0), // in cents
     isLocked: integer('isLocked', { mode: 'boolean' }).notNull().default(false),
+    isPrivate: integer('isPrivate', { mode: 'boolean' }).notNull().default(false),
     createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
     updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull()
 });

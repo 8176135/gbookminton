@@ -7,7 +7,7 @@
 </script>
 
 <svelte:head>
-	<title>Admin Dashboard - Gookminton</title>
+	<title>Admin Dashboard - Gbookminton</title>
 </svelte:head>
 
 <div class="min-h-screen bg-gray-950 p-6 text-white">
@@ -54,7 +54,7 @@
 								<div class="text-xs text-red-400"><LocalDate date={ev.deadline} /></div>
 							</td>
 							<td class="px-6 py-4 text-right">
-								<a href="/admin/events/{ev.id}" class="text-indigo-400 hover:text-indigo-300"
+								<a href="/events/{ev.id}" class="text-indigo-400 hover:text-indigo-300"
 									>Manage</a
 								>
 							</td>

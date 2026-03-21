@@ -35,7 +35,7 @@
 </script>
 
 <svelte:head>
-	<title>Sign Up - Gookminton</title>
+	<title>Sign Up - Gbookminton</title>
 </svelte:head>
 
 <div class="flex min-h-screen items-center justify-center p-4">
@@ -48,7 +48,7 @@
 			>
 				G
 			</div>
-			<h1 class="font-outfit text-4xl font-bold tracking-tight text-white">Join Gookminton</h1>
+			<h1 class="font-outfit text-4xl font-bold tracking-tight text-white">Join Gbookminton</h1>
 			<p class="mt-2 text-sm text-gray-400">Manage your badminton & pickleball bookings.</p>
 		</div>
 

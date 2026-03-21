@@ -17,7 +17,7 @@
   ];
   hostname = "stormseat";
   username = "elsecaller";
-  git_root = null;
+  git_root = "/home/elsecaller/Projects/gookminton";
   secretspec = null;
 };
     in
@@ -54,7 +54,7 @@
   ];
   hostname = "stormseat";
   username = "elsecaller";
-  git_root = null;
+  git_root = "/home/elsecaller/Projects/gookminton";
   secretspec = null;
 };
       devenv =

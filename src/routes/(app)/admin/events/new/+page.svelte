@@ -6,6 +6,7 @@
 	let timezone = $state('');
 	let utcDate = $state('');
 	let utcDeadline = $state('');
+	let isPrivate = $state(false);
 
 	onMount(() => {
 		timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -178,6 +179,28 @@
 						class="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-white transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
 					/>
 				</div>
+
+				<!-- Privacy toggle -->
+				<input type="hidden" name="isPrivate" value={String(isPrivate)} />
+				<label class="flex cursor-pointer items-center gap-3">
+					<div class="relative">
+						<input type="checkbox" class="sr-only" bind:checked={isPrivate} />
+						<div
+							class="h-6 w-11 rounded-full transition-colors duration-200 {isPrivate
+								? 'bg-indigo-600'
+								: 'bg-gray-700'}"
+						></div>
+						<div
+							class="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 {isPrivate
+								? 'translate-x-5'
+								: 'translate-x-0'}"
+						></div>
+					</div>
+					<span class="text-sm font-medium text-gray-300">
+						Private event
+						<span class="text-gray-500">(hide attendee names from non-admins)</span>
+					</span>
+				</label>
 
 				<button
 					type="submit"

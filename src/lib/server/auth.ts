@@ -24,15 +24,24 @@ export const auth = betterAuth({
     emailAndPassword: {
         enabled: true,
         requireEmailVerification: true,
+        sendResetPassword: async ({ user, url }, request) => {
+            const resend = new (await import('resend')).Resend(env.RESEND_API_KEY);
+            await resend.emails.send({
+                from: 'Gbookminton <noreply@Gbookminton.com>',
+                to: user.email,
+                subject: 'Reset your password for Gbookminton',
+                html: `<p>Hi ${user.name},</p><p>Please reset your password by clicking <a href="${url}">this link</a>.</p>`
+            });
+        }
     },
     emailVerification: {
         sendOnSignUp: true,
         sendVerificationEmail: async ({ user, url, token }, request) => {
             const resend = new (await import('resend')).Resend(env.RESEND_API_KEY);
             await resend.emails.send({
-                from: 'Gookminton <noreply@gookminton.com>',
+                from: 'Gbookminton <noreply@Gbookminton.com>',
                 to: user.email,
-                subject: 'Verify your email address for Gookminton',
+                subject: 'Verify your email address for Gbookminton',
                 html: `<p>Hi ${user.name},</p><p>Please verify your email address by clicking <a href="${url}">this link</a>.</p>`
             });
         }

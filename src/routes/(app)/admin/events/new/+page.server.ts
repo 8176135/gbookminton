@@ -30,6 +30,7 @@ export const actions: Actions = {
         const capacity = parseInt(data.get('capacity') as string, 10);
         const costDollars = parseFloat(data.get('cost') as string);
         const deadlineStr = data.get('deadline') as string;
+        const isPrivate = data.get('isPrivate') === 'true';
 
         const costCents = Math.round(costDollars * 100);
 
@@ -43,6 +44,7 @@ export const actions: Actions = {
             capacity,
             cost: costCents,
             deadline: new Date(deadlineStr),
+            isPrivate,
             createdAt: new Date(),
             updatedAt: new Date()
         });

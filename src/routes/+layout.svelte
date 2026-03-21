@@ -56,7 +56,7 @@
 							</div>
 							<span
 								class="font-outfit bg-linear-to-r from-white to-gray-400 bg-clip-text text-xl font-bold tracking-tight text-transparent"
-								>Gookminton</span
+								>Gbookminton</span
 							>
 						</a>
 
@@ -87,11 +87,14 @@
 					</div>
 
 					<div class="flex items-center gap-4">
-						<div class="hidden flex-col items-end sm:flex">
+						<a
+							href="/account"
+							class="hidden flex-col items-end transition hover:opacity-80 sm:flex"
+						>
 							<span class="text-xs font-medium tracking-wider text-gray-500 uppercase">Account</span
 							>
 							<span class="text-sm font-semibold text-gray-200">{session.user.name}</span>
-						</div>
+						</a>
 						<button
 							onclick={handleLogout}
 							class="rounded-lg border border-white/5 px-4 py-2 text-sm font-medium text-gray-400 transition hover:bg-white/5 hover:text-white"

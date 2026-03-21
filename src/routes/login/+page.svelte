@@ -33,7 +33,7 @@
 </script>
 
 <svelte:head>
-	<title>Log In - Gookminton</title>
+	<title>Log In - Gbookminton</title>
 </svelte:head>
 
 <div class="flex min-h-screen items-center justify-center p-4">
@@ -107,7 +107,7 @@
 		</form>
 
 		<p class="mt-8 text-center text-sm text-gray-500">
-			New to Gookminton?
+			New to Gbookminton?
 			<a href="/signup" class="font-semibold text-indigo-400 transition hover:text-indigo-300"
 				>Create an account</a
 			>

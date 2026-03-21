@@ -13,7 +13,7 @@
 </script>
 
 <svelte:head>
-	<title>My Dashboard - Gookminton</title>
+	<title>My Dashboard - Gbookminton</title>
 </svelte:head>
 
 <div class="min-h-screen bg-gray-950 p-6 text-white">
@@ -55,7 +55,11 @@
 				<div
 					class="flex flex-col rounded-2xl border border-gray-800 bg-gray-900/50 p-6 backdrop-blur-xl transition hover:border-gray-700"
 				>
-					<h3 class="mb-1 text-lg font-bold text-white">{ev.title}</h3>
+					<a
+						href="/events/{ev.id}"
+						class="mb-1 inline-block text-lg font-bold text-white transition hover:text-indigo-300"
+						>{ev.title}</a
+					>
 					<p class="mb-4 text-sm text-gray-400">
 						<LocalDate date={ev.date} /> • {ev.duration} mins
 					</p>

@@ -1,0 +1,21 @@
+IP rate limits per action
+Difference costs for event depending on account type. Two account types, (company, plus-one)
+
+Currently there is a special page when you click on an event in admin mode. This page should be made public, but have edit options hidden for non-admins.
+An event should also be allowed to be set as private, so public users can't see the list of people already signed up, only the number and number of people in the waitlist.
+Also the admin should be allowed to edit all the event details.
+
+
+In the same column as capacity on the admin dashboard, show the number of registered and waitlisting people.
+
+When you are moved from waitlist to the actual list, send a email to the person.
+
+On the admin dashboard, add a tag to say that it is the admin view.
+
+Add currently happening events to the dashboard. in a separate section. And remove past events from the dashboard.
+
+Have a past event events section on the dashboard as well that's collapsed by default. This should only be visible to admins.
+
+On the account page, add a section to show the user's past events that they have registered to.
+
+Refactor the event editing page so same code is used for both edit and create to avoid too much duplication.
