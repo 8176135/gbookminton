@@ -1,4 +1,4 @@
-import type { Session, User } from "$lib/server/auth";
+import type { Session, User } from '$lib/server/auth';
 
 declare global {
 	namespace App {
@@ -13,4 +13,4 @@ declare global {
 	}
 }
 
-export { };
+export {};

@@ -3,9 +3,9 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-    plugins: [tailwindcss(), sveltekit()],
-    ssr: {
-        // This is the magic line
-        external: ['bun:sqlite']
-    }
+	plugins: [tailwindcss(), sveltekit()],
+	ssr: {
+		// This is the magic line
+		external: ['bun:sqlite']
+	}
 });

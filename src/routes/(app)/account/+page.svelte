@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { authClient } from '$lib/auth-client';
 	import { invalidateAll } from '$app/navigation';
+	import LocalDate from '$lib/components/LocalDate.svelte';
 
 	interface Props {
-		data: { user: any };
+		data: { user: any; pastEvents: any[] };
 	}
 
 	let { data }: Props = $props();
+	let pastEvents = $derived(data.pastEvents);
 	let name = $state('');
 
 	$effect(() => {
@@ -234,4 +236,73 @@
 			</form>
 		</div>
 	</div>
+
+	<!-- Past Events Section -->
+	{#if pastEvents.length > 0}
+		<div class="mt-12">
+			<h2 class="font-outfit mb-6 text-2xl font-bold tracking-tight text-white">Past Events</h2>
+			<div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-2xl">
+				<table class="w-full text-left text-sm text-gray-400">
+					<thead class="border-b border-white/10 bg-white/5 text-xs text-gray-500 uppercase">
+						<tr>
+							<th class="px-6 py-4 font-medium">Event</th>
+							<th class="px-6 py-4 font-medium">Date</th>
+							<th class="px-6 py-4 font-medium">Location</th>
+							<th class="px-6 py-4 font-medium">Duration</th>
+							<th class="px-6 py-4 font-medium">Status</th>
+						</tr>
+					</thead>
+					<tbody class="divide-y divide-white/5">
+						{#each pastEvents as ev}
+							<tr class="transition hover:bg-white/5">
+								<td class="px-6 py-4">
+									<a href="/events/{ev.id}" class="font-medium text-white hover:text-indigo-300">
+										{ev.title}
+									</a>
+								</td>
+								<td class="px-6 py-4 text-gray-400">
+									<LocalDate date={ev.date} />
+								</td>
+								<td class="px-6 py-4 text-gray-400">{ev.location}</td>
+								<td class="px-6 py-4 text-gray-400">{ev.duration} mins</td>
+								<td class="px-6 py-4">
+									{#if ev.signupStatus === 'locked'}
+										<span
+											class="rounded-full border border-indigo-500/20 bg-indigo-500/20 px-3 py-1 text-xs font-semibold text-indigo-300"
+										>
+											Attended
+										</span>
+									{:else if ev.signupStatus === 'removed'}
+										<span
+											class="rounded-full border border-red-500/20 bg-red-500/20 px-3 py-1 text-xs font-semibold text-red-300"
+										>
+											Removed
+										</span>
+									{:else if ev.signupStatus === 'withdrawn'}
+										<span
+											class="rounded-full border border-gray-500/20 bg-gray-500/20 px-3 py-1 text-xs font-semibold text-gray-400"
+										>
+											Withdrawn
+										</span>
+									{:else if ev.signupStatus === 'listed'}
+										<span
+											class="rounded-full border border-emerald-500/20 bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-300"
+										>
+											Attended
+										</span>
+									{:else}
+										<span
+											class="rounded-full border border-yellow-500/20 bg-yellow-500/20 px-3 py-1 text-xs font-semibold text-yellow-300"
+										>
+											Waitlisted
+										</span>
+									{/if}
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	{/if}
 </div>
