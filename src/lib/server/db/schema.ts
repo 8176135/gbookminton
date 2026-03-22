@@ -12,7 +12,8 @@ export const user = sqliteTable('user', {
 	// App customized fields
 	balance: integer('balance').notNull().default(0), // in cents
 	shortCode: text('shortCode').notNull().unique(),
-	role: text('role').notNull().default('user') // enum values: user, admin
+	role: text('role').notNull().default('user'), // enum values: user, admin
+	accountType: text('accountType').notNull().default('plusone') // enum values: company, plusone
 });
 
 export const session = sqliteTable('session', {
@@ -64,7 +65,8 @@ export const event = sqliteTable('event', {
 	description: text('description').notNull(),
 	capacity: integer('capacity').notNull(),
 	deadline: integer('deadline', { mode: 'timestamp' }).notNull(),
-	cost: integer('cost').notNull().default(0), // in cents
+	costCompany: integer('costCompany').notNull().default(0), // in cents
+	costPlusOne: integer('costPlusOne').notNull().default(0), // in cents
 	isLocked: integer('isLocked', { mode: 'boolean' }).notNull().default(false),
 	isPrivate: integer('isPrivate', { mode: 'boolean' }).notNull().default(false),
 	createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
@@ -92,4 +94,10 @@ export const transaction = sqliteTable('transaction', {
 	reference: text('reference').notNull(), // up bank reference or event id
 	type: text('type').notNull(), // enum values: deposit, deduction
 	date: integer('date', { mode: 'timestamp' }).notNull()
+});
+
+export const companyDomain = sqliteTable('companyDomain', {
+	id: text('id').primaryKey(),
+	domain: text('domain').notNull().unique(),
+	createdAt: integer('createdAt', { mode: 'timestamp' }).notNull()
 });

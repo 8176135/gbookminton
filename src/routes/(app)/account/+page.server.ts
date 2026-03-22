@@ -1,8 +1,9 @@
-import { redirect } from '@sveltejs/kit';
+import { redirect, fail } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { event, eventSignup } from '$lib/server/db/schema';
+import { event, eventSignup, user } from '$lib/server/db/schema';
 import { desc, eq } from 'drizzle-orm';
-import type { PageServerLoad } from './$types';
+import { updateUserAccountType } from '$lib/server/account';
+import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.session) {
@@ -11,8 +12,21 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	const now = new Date();
 
-	// Get user's event registrations with event details
-	const userId = locals.user!.id;
+	// Get user details
+	const [currentUser] = await db
+		.select({
+			id: user.id,
+			name: user.name,
+			email: user.email,
+			role: user.role,
+			accountType: user.accountType,
+			balance: user.balance,
+			shortCode: user.shortCode,
+			createdAt: user.createdAt
+		})
+		.from(user)
+		.where(eq(user.id, locals.session.user.id))
+		.limit(1);
 
 	// Get user's event registrations with event details
 	const userRegistrations = await db
@@ -22,7 +36,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		})
 		.from(eventSignup)
 		.innerJoin(event, eq(eventSignup.eventId, event.id))
-		.where(eq(eventSignup.userId, userId))
+		.where(eq(eventSignup.userId, currentUser.id))
 		.orderBy(desc(event.date));
 
 	// Filter to past events only
@@ -37,12 +51,60 @@ export const load: PageServerLoad = async ({ locals }) => {
 			date: ev.date,
 			location: ev.location,
 			duration: ev.duration,
-			cost: ev.cost,
+			cost: signup.status === 'locked' || signup.status === 'listed' ? ev.costCompany : 0,
 			signupStatus: signup.status
 		}));
 
 	return {
-		user: locals.user,
+		user: {
+			...currentUser,
+			createdAt: currentUser.createdAt.toISOString()
+		},
 		pastEvents
 	};
+};
+
+export const actions: Actions = {
+	updateEmail: async ({ request, locals }) => {
+		if (!locals.session) {
+			throw redirect(302, '/login');
+		}
+
+		const data = await request.formData();
+		const newEmail = (data.get('email') as string)?.toLowerCase().trim();
+
+		if (!newEmail) {
+			return fail(400, { error: 'Email is required' });
+		}
+
+		// Basic email validation
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		if (!emailRegex.test(newEmail)) {
+			return fail(400, { error: 'Invalid email format' });
+		}
+
+		const userId = locals.session.user.id;
+
+		// Check if email is already in use by another user
+		const existingUser = await db.select().from(user).where(eq(user.email, newEmail)).limit(1);
+
+		if (existingUser.length > 0 && existingUser[0].id !== userId) {
+			return fail(400, { error: 'This email is already in use by another account' });
+		}
+
+		// Update email and re-evaluate account type
+		await db
+			.update(user)
+			.set({ email: newEmail, updatedAt: new Date() })
+			.where(eq(user.id, userId));
+
+		// Re-evaluate account type based on new email
+		await updateUserAccountType(userId, newEmail);
+
+		return {
+			success: true,
+			message:
+				'Email updated successfully. Your account type has been adjusted based on your new email domain.'
+		};
+	}
 };

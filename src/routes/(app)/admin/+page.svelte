@@ -30,7 +30,19 @@
 				<h1 class="text-3xl font-bold tracking-tight text-white">Admin Dashboard</h1>
 				<p class="text-sm text-gray-400">Manage events, bookings, and users.</p>
 			</div>
-			<div class="flex gap-4">
+			<div class="flex flex-wrap gap-3">
+				<a
+					href="/admin/settings"
+					class="rounded-xl border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-700"
+				>
+					Settings
+				</a>
+				<a
+					href="/admin/users"
+					class="rounded-xl border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-700"
+				>
+					Manage Users
+				</a>
 				<a
 					href="/admin?showPast={showPast ? 'false' : 'true'}"
 					class="rounded-xl border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-700"
@@ -58,7 +70,7 @@
 							<th class="px-6 py-4 font-medium">Date & Time</th>
 							<th class="px-6 py-4 font-medium">Location</th>
 							<th class="px-6 py-4 font-medium">Enrolled / Waitlist</th>
-							<th class="px-6 py-4 font-medium">Cost / Deadline</th>
+							<th class="px-6 py-4 font-medium">Pricing (Company / PlusOne)</th>
 							<th class="px-6 py-4 text-right font-medium">Actions</th>
 						</tr>
 					</thead>
@@ -79,8 +91,17 @@
 									{/if}
 								</td>
 								<td class="px-6 py-4">
-									<div class="font-medium text-emerald-400">${(ev.cost / 100).toFixed(2)}</div>
-									<div class="text-xs text-red-400"><LocalDate date={ev.deadline} /></div>
+									<div class="flex flex-col gap-0.5">
+										<span class="text-blue-400"
+											>${(ev.costCompany / 100).toFixed(2)}
+											<span class="text-xs text-gray-500">Company</span></span
+										>
+										<span class="text-emerald-400"
+											>${(ev.costPlusOne / 100).toFixed(2)}
+											<span class="text-xs text-gray-500">PlusOne</span></span
+										>
+									</div>
+									<div class="mt-1 text-xs text-red-400"><LocalDate date={ev.deadline} /></div>
 								</td>
 								<td class="px-6 py-4 text-right">
 									<a href="/events/{ev.id}" class="text-indigo-400 hover:text-indigo-300">Manage</a>
@@ -115,7 +136,7 @@
 									<th class="px-6 py-4 font-medium">Date & Time</th>
 									<th class="px-6 py-4 font-medium">Location</th>
 									<th class="px-6 py-4 font-medium">Enrolled / Waitlist</th>
-									<th class="px-6 py-4 font-medium">Cost / Deadline</th>
+									<th class="px-6 py-4 font-medium">Pricing / Deadline</th>
 									<th class="px-6 py-4 text-right font-medium">Actions</th>
 								</tr>
 							</thead>
@@ -136,8 +157,17 @@
 											{/if}
 										</td>
 										<td class="px-6 py-4">
-											<div class="font-medium text-emerald-400">${(ev.cost / 100).toFixed(2)}</div>
-											<div class="text-xs text-red-400"><LocalDate date={ev.deadline} /></div>
+											<div class="flex flex-col gap-0.5">
+												<span class="text-blue-400"
+													>${(ev.costCompany / 100).toFixed(2)}
+													<span class="text-xs text-gray-500">Co</span></span
+												>
+												<span class="text-emerald-400"
+													>${(ev.costPlusOne / 100).toFixed(2)}
+													<span class="text-xs text-gray-500">P1</span></span
+												>
+											</div>
+											<div class="mt-1 text-xs text-red-400"><LocalDate date={ev.deadline} /></div>
 										</td>
 										<td class="px-6 py-4 text-right">
 											<a href="/events/{ev.id}" class="text-indigo-400 hover:text-indigo-300"
@@ -168,7 +198,7 @@
 									<th class="px-6 py-4 font-medium">Date & Time</th>
 									<th class="px-6 py-4 font-medium">Location</th>
 									<th class="px-6 py-4 font-medium">Enrolled / Waitlist</th>
-									<th class="px-6 py-4 font-medium">Cost / Deadline</th>
+									<th class="px-6 py-4 font-medium">Pricing</th>
 									<th class="px-6 py-4 text-right font-medium">Actions</th>
 								</tr>
 							</thead>
@@ -189,9 +219,16 @@
 											{/if}
 										</td>
 										<td class="px-6 py-4 text-gray-500">
-											<div>${(ev.cost / 100).toFixed(2)}</div>
-											<div>${(ev.cost / 100).toFixed(2)}</div>
-											<div class="text-xs"><LocalDate date={ev.deadline} /></div>
+											<div class="flex flex-col gap-0.5">
+												<span class="text-blue-400"
+													>${(ev.costCompany / 100).toFixed(2)}
+													<span class="text-xs text-gray-600">Co</span></span
+												>
+												<span class="text-emerald-400"
+													>${(ev.costPlusOne / 100).toFixed(2)}
+													<span class="text-xs text-gray-600">P1</span></span
+												>
+											</div>
 										</td>
 										<td class="px-6 py-4 text-right">
 											<a href="/events/{ev.id}" class="text-indigo-400/70 hover:text-indigo-300"

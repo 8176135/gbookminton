@@ -18,7 +18,8 @@ export const auth = betterAuth({
 		additionalFields: {
 			role: { type: 'string', required: true, defaultValue: 'user' },
 			balance: { type: 'number', required: true, defaultValue: 0 },
-			shortCode: { type: 'string', required: false }
+			shortCode: { type: 'string', required: false },
+			accountType: { type: 'string', required: true, defaultValue: 'plusone' }
 		}
 	} as const,
 	emailAndPassword: {
@@ -49,7 +50,7 @@ export const auth = betterAuth({
 	databaseHooks: {
 		user: {
 			create: {
-				before: async (user) => {
+				before: async (userData) => {
 					// Generate a secure, recognizable 6-character shortcode
 					const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 					let code = '';
@@ -57,12 +58,34 @@ export const auth = betterAuth({
 						code += chars.charAt(Math.floor(Math.random() * chars.length));
 					}
 
+					// Determine account type based on email domain
+					const email = userData.email || '';
+					const emailDomain = email.split('@')[1]?.toLowerCase() || '';
+					// Default to plusone, will be updated after companyDomain table is set up
+					let accountType = 'plusone';
+
+					// Check if email domain matches any company domain
+					try {
+						const domains = await db
+							.select({ domain: schema.companyDomain.domain })
+							.from(schema.companyDomain);
+						for (const { domain } of domains) {
+							if (domain.toLowerCase() === emailDomain) {
+								accountType = 'company';
+								break;
+							}
+						}
+					} catch {
+						// If table doesn't exist yet, use default
+					}
+
 					return {
 						data: {
-							...user,
+							...userData,
 							shortCode: code,
 							balance: 0,
-							role: 'user'
+							role: 'user',
+							accountType
 						}
 					};
 				}

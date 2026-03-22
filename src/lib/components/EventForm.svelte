@@ -13,10 +13,11 @@
 			duration: number;
 			description: string;
 			capacity: number;
-			cost: number;
+			costCompany: number;
+			costPlusOne: number;
 			isPrivate: boolean;
 		};
-	form?: { error?: string } | null;
+		form?: { error?: string } | null;
 		action?: string;
 		onCancel?: () => void;
 	}
@@ -57,7 +58,8 @@
 
 	let localDate = $derived(event ? toLocalInputValue(new Date(event.date)) : '');
 	let localDeadline = $derived(event ? toLocalInputValue(new Date(event.deadline)) : '');
-	let defaultCost = $derived(event ? (event.cost / 100).toFixed(2) : '15.00');
+	let defaultCostCompany = $derived(event ? (event.costCompany / 100).toFixed(2) : '15.00');
+	let defaultCostPlusOne = $derived(event ? (event.costPlusOne / 100).toFixed(2) : '20.00');
 	let defaultDuration = $derived(event?.duration ?? 120);
 </script>
 
@@ -74,8 +76,11 @@
 			update({ reset: false });
 		};
 	}}
-	class="space-y-5 rounded-2xl border border-gray-800 bg-gray-900/50 p-6 backdrop-blur-xl {mode === 'edit' ? 'border-indigo-500/30' : ''}"
-	>
+	class="space-y-5 rounded-2xl border border-gray-800 bg-gray-900/50 p-6 backdrop-blur-xl {mode ===
+	'edit'
+		? 'border-indigo-500/30'
+		: ''}"
+>
 	<h2 class="text-xl font-bold text-white">
 		{mode === 'create' ? 'Create New Event' : 'Edit Event'}
 	</h2>
@@ -87,7 +92,11 @@
 	{/if}
 
 	<input type="hidden" name="date" value={utcDate || (event ? event.date.toISOString() : '')} />
-	<input type="hidden" name="deadline" value={utcDeadline || (event ? event.deadline.toISOString() : '')} />
+	<input
+		type="hidden"
+		name="deadline"
+		value={utcDeadline || (event ? event.deadline.toISOString() : '')}
+	/>
 	<input type="hidden" name="isPrivate" value={String(isPrivate)} />
 
 	<div>
@@ -158,8 +167,8 @@
 			required
 			rows="3"
 			class="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-white transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
-			placeholder="Provide extra details..."
-		>{event?.description ?? ''}</textarea>
+			placeholder="Provide extra details...">{event?.description ?? ''}</textarea
+		>
 	</div>
 
 	<div class="grid grid-cols-2 gap-4">
@@ -177,20 +186,55 @@
 				class="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-white transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
 			/>
 		</div>
+	</div>
+
+	<div class="grid grid-cols-2 gap-4">
 		<div>
-			<label for="cost" class="mb-1.5 block text-sm font-medium text-gray-300"
-				>Cost (dollars)</label
-			>
-			<input
-				type="number"
-				id="cost"
-				name="cost"
-				required
-				min="0"
-				step="0.5"
-				value={defaultCost}
-				class="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-white transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
-			/>
+			<label for="costCompany" class="mb-1.5 block text-sm font-medium text-gray-300">
+				<span class="inline-flex items-center gap-1">
+					<span>Company Cost</span>
+					<span class="rounded bg-blue-500/20 px-1.5 py-0.5 text-xs text-blue-400">Blue</span>
+				</span>
+			</label>
+			<div class="relative">
+				<span class="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-gray-500"
+					>$</span
+				>
+				<input
+					type="number"
+					id="costCompany"
+					name="costCompany"
+					required
+					min="0"
+					step="0.5"
+					value={defaultCostCompany}
+					class="w-full rounded-xl border border-gray-700 bg-gray-900 py-3 pr-4 pl-8 text-white transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+				/>
+			</div>
+		</div>
+		<div>
+			<label for="costPlusOne" class="mb-1.5 block text-sm font-medium text-gray-300">
+				<span class="inline-flex items-center gap-1">
+					<span>PlusOne Cost</span>
+					<span class="rounded bg-emerald-500/20 px-1.5 py-0.5 text-xs text-emerald-400">Green</span
+					>
+				</span>
+			</label>
+			<div class="relative">
+				<span class="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-gray-500"
+					>$</span
+				>
+				<input
+					type="number"
+					id="costPlusOne"
+					name="costPlusOne"
+					required
+					min="0"
+					step="0.5"
+					value={defaultCostPlusOne}
+					class="w-full rounded-xl border border-gray-700 bg-gray-900 py-3 pr-4 pl-8 text-white transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+				/>
+			</div>
 		</div>
 	</div>
 

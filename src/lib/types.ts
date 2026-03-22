@@ -18,3 +18,9 @@ export enum UserRole {
 	User = 'user',
 	Admin = 'admin'
 }
+
+// Account type values
+export enum AccountType {
+	PlusOne = 'plusone',
+	Company = 'company'
+}

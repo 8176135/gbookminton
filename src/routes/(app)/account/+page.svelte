@@ -1,25 +1,19 @@
 <script lang="ts">
 	import { authClient } from '$lib/auth-client';
+	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import LocalDate from '$lib/components/LocalDate.svelte';
+	import type { PageProps } from './$types';
 
-	interface Props {
-		data: { user: any; pastEvents: any[] };
-	}
-
-	let { data }: Props = $props();
+	let { data, form }: PageProps = $props();
 	let pastEvents = $derived(data.pastEvents);
-	let name = $state('');
-
-	$effect(() => {
-		if (data.user?.name) {
-			name = data.user.name;
-		}
-	});
+	let user = $derived(data.user);
+	let name = $state(data.user?.name || '');
 
 	let currentPassword = $state('');
 	let newPassword = $state('');
 	let confirmPassword = $state('');
+	let email = $state(data.user?.email || '');
 
 	let nameLoading = $state(false);
 	let nameError = $state('');
@@ -29,6 +23,21 @@
 	let passwordError = $state('');
 	let passwordSuccess = $state('');
 
+	let emailLoading = $state(false);
+	let emailError = $state('');
+	let emailSuccess = $state('');
+
+	// Handle form action results
+	$effect(() => {
+		if (form?.success && form?.message) {
+			emailSuccess = form.message;
+			emailError = '';
+			email = data.user?.email || '';
+		} else if (form?.error) {
+			emailError = form.error;
+			emailSuccess = '';
+		}
+	});
 	const handleUpdateName = async (e: Event) => {
 		e.preventDefault();
 		nameLoading = true;
@@ -99,9 +108,27 @@
 		<div class="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-2xl">
 			<h2 class="font-outfit mb-6 text-xl font-semibold text-white">Profile Information</h2>
 
+			<!-- Account Type Badge -->
+			<div
+				class="mb-6 flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4"
+			>
+				<div>
+					<p class="text-xs font-semibold tracking-wider text-gray-500 uppercase">Account Type</p>
+					<p class="mt-1 text-sm text-gray-400">Determines your event pricing</p>
+				</div>
+				<span
+					class="inline-flex rounded-full px-3 py-1 text-sm font-semibold {user?.accountType ===
+					'company'
+						? 'border border-blue-500/30 bg-blue-500/20 text-blue-400'
+						: 'border border-emerald-500/30 bg-emerald-500/20 text-emerald-400'}"
+				>
+					{user?.accountType === 'company' ? 'Company' : 'PlusOne'}
+				</span>
+			</div>
+
 			{#if nameError}
 				<div
-					class="mb-6 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400"
+					class="mb-4 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400"
 				>
 					{nameError}
 				</div>
@@ -109,28 +136,13 @@
 
 			{#if nameSuccess}
 				<div
-					class="mb-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-400"
+					class="mb-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-400"
 				>
 					{nameSuccess}
 				</div>
 			{/if}
 
-			<form onsubmit={handleUpdateName} class="space-y-5">
-				<div>
-					<label
-						for="email-display"
-						class="mb-1.5 block text-xs font-semibold tracking-wider text-gray-500 uppercase"
-						>Email Address (Locked)</label
-					>
-					<input
-						type="email"
-						id="email-display"
-						value={data.user?.email}
-						disabled
-						class="w-full rounded-2xl border border-white/5 bg-white/2 px-4 py-3.5 text-gray-500 transition focus:outline-none"
-					/>
-				</div>
-
+			<form onsubmit={handleUpdateName} class="mb-6 space-y-5">
 				<div>
 					<label
 						for="name"
@@ -155,85 +167,166 @@
 					{nameLoading ? 'Saving...' : 'Update Name'}
 				</button>
 			</form>
+
+			<!-- Email Update Section -->
+			<hr class="border-white/10" />
+			<div class="mt-6">
+				<h3 class="mb-4 text-lg font-semibold text-white">Change Email</h3>
+
+				{#if emailError}
+					<div
+						class="mb-4 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400"
+					>
+						{emailError}
+					</div>
+				{/if}
+
+				{#if emailSuccess}
+					<div
+						class="mb-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-400"
+					>
+						{emailSuccess}
+					</div>
+				{/if}
+
+				<form
+					method="POST"
+					action="?/updateEmail"
+					use:enhance={() => {
+						emailLoading = true;
+						return async ({ update }) => {
+							emailLoading = false;
+							update();
+						};
+					}}
+					class="space-y-4"
+				>
+					<div>
+						<label
+							for="email"
+							class="mb-1.5 block text-xs font-semibold tracking-wider text-gray-500 uppercase"
+							>New Email Address</label
+						>
+						<input
+							type="email"
+							id="email"
+							name="email"
+							bind:value={email}
+							required
+							class="w-full rounded-2xl border border-white/5 bg-white/5 px-4 py-3.5 text-white transition placeholder:text-gray-600 focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none"
+							placeholder="new@example.com"
+						/>
+					</div>
+
+					<p class="text-xs text-gray-500">
+						Changing your email will automatically update your account type if the new email domain
+						matches a company domain.
+					</p>
+
+					<button
+						type="submit"
+						disabled={emailLoading}
+						class="font-outfit w-full rounded-2xl bg-white/10 px-4 py-3.5 font-bold text-white transition hover:bg-white/20 active:scale-[0.98] disabled:opacity-50"
+					>
+						{emailLoading ? 'Updating...' : 'Update Email'}
+					</button>
+				</form>
+			</div>
 		</div>
 
-		<!-- Change Password -->
-		<div class="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-2xl">
-			<h2 class="font-outfit mb-6 text-xl font-semibold text-white">Security</h2>
-
-			{#if passwordError}
-				<div
-					class="mb-6 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400"
-				>
-					{passwordError}
+		<!-- Account Info & Security -->
+		<div class="space-y-8">
+			<!-- Shortcode Display -->
+			<div class="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-2xl">
+				<h2 class="font-outfit mb-4 text-xl font-semibold text-white">Your Code</h2>
+				<p class="mb-4 text-sm text-gray-400">
+					Share this code with friends for easy sign-up referencing.
+				</p>
+				<div class="rounded-2xl border border-white/10 bg-black/20 px-6 py-4 text-center">
+					<span class="font-mono text-3xl font-bold tracking-widest text-indigo-400">
+						{user?.shortCode || '------'}
+					</span>
 				</div>
-			{/if}
+			</div>
 
-			{#if passwordSuccess}
-				<div
-					class="mb-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-400"
-				>
-					{passwordSuccess}
-				</div>
-			{/if}
+			<!-- Change Password -->
+			<div class="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-2xl">
+				<h2 class="font-outfit mb-6 text-xl font-semibold text-white">Security</h2>
 
-			<form onsubmit={handleChangePassword} class="space-y-5">
-				<div>
-					<label
-						for="current-password"
-						class="mb-1.5 block text-xs font-semibold tracking-wider text-gray-500 uppercase"
-						>Current Password</label
+				{#if passwordError}
+					<div
+						class="mb-6 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400"
 					>
-					<input
-						type="password"
-						id="current-password"
-						bind:value={currentPassword}
-						required
-						class="w-full rounded-2xl border border-white/5 bg-white/5 px-4 py-3.5 text-white transition placeholder:text-gray-600 focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none"
-						placeholder="••••••••"
-					/>
-				</div>
+						{passwordError}
+					</div>
+				{/if}
 
-				<div>
-					<label
-						for="new-password"
-						class="mb-1.5 block text-xs font-semibold tracking-wider text-gray-500 uppercase"
-						>New Password</label
+				{#if passwordSuccess}
+					<div
+						class="mb-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-400"
 					>
-					<input
-						type="password"
-						id="new-password"
-						bind:value={newPassword}
-						required
-						class="w-full rounded-2xl border border-white/5 bg-white/5 px-4 py-3.5 text-white transition placeholder:text-gray-600 focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none"
-						placeholder="••••••••"
-					/>
-				</div>
+						{passwordSuccess}
+					</div>
+				{/if}
 
-				<div>
-					<label
-						for="confirm-password"
-						class="mb-1.5 block text-xs font-semibold tracking-wider text-gray-500 uppercase"
-						>Confirm New Password</label
+				<form onsubmit={handleChangePassword} class="space-y-5">
+					<div>
+						<label
+							for="current-password"
+							class="mb-1.5 block text-xs font-semibold tracking-wider text-gray-500 uppercase"
+							>Current Password</label
+						>
+						<input
+							type="password"
+							id="current-password"
+							bind:value={currentPassword}
+							required
+							class="w-full rounded-2xl border border-white/5 bg-white/5 px-4 py-3.5 text-white transition placeholder:text-gray-600 focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none"
+							placeholder="••••••••"
+						/>
+					</div>
+
+					<div>
+						<label
+							for="new-password"
+							class="mb-1.5 block text-xs font-semibold tracking-wider text-gray-500 uppercase"
+							>New Password</label
+						>
+						<input
+							type="password"
+							id="new-password"
+							bind:value={newPassword}
+							required
+							class="w-full rounded-2xl border border-white/5 bg-white/5 px-4 py-3.5 text-white transition placeholder:text-gray-600 focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none"
+							placeholder="••••••••"
+						/>
+					</div>
+
+					<div>
+						<label
+							for="confirm-password"
+							class="mb-1.5 block text-xs font-semibold tracking-wider text-gray-500 uppercase"
+							>Confirm New Password</label
+						>
+						<input
+							type="password"
+							id="confirm-password"
+							bind:value={confirmPassword}
+							required
+							class="w-full rounded-2xl border border-white/5 bg-white/5 px-4 py-3.5 text-white transition placeholder:text-gray-600 focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none"
+							placeholder="••••••••"
+						/>
+					</div>
+
+					<button
+						type="submit"
+						disabled={passwordLoading}
+						class="font-outfit w-full rounded-2xl bg-white/10 px-4 py-3.5 font-bold text-white transition hover:bg-white/20 active:scale-[0.98] disabled:opacity-50"
 					>
-					<input
-						type="password"
-						id="confirm-password"
-						bind:value={confirmPassword}
-						required
-						class="w-full rounded-2xl border border-white/5 bg-white/5 px-4 py-3.5 text-white transition placeholder:text-gray-600 focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none"
-						placeholder="••••••••"
-					/>
-				</div>
-
-				<button
-					type="submit"
-					disabled={passwordLoading}
-					class="font-outfit w-full rounded-2xl bg-white/10 px-4 py-3.5 font-bold text-white transition hover:bg-white/20 active:scale-[0.98] disabled:opacity-50"
-				>
-					{passwordLoading ? 'Updating...' : 'Change Password'}
-				</button>
-			</form>
+						{passwordLoading ? 'Updating...' : 'Change Password'}
+					</button>
+				</form>
+			</div>
 		</div>
 	</div>
 

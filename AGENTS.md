@@ -52,10 +52,11 @@ src/
 │   ├── (app)/             # Route group: authenticated routes
 │   │   ├── dashboard/     # User dashboard
 │   │   ├── events/        # Event browsing and details
+│   │   ├── account/       # User account settings
 │   │   └── admin/         # Admin-only management
-│   ├── api/auth/          # BetterAuth API endpoints
-│   └── signup/            # Public auth pages
-├── hooks.server.ts        # Server lifecycle hooks
+│   │       ├── users/     # User management (account types)
+│   │       ├── settings/  # System settings (company domains)
+│   │       └── events/    # Event creation
 ├── app.d.ts              # TypeScript declarations (App.Locals)
 ├── app.html              # HTML template
 └── app.css               # Global styles (Tailwind)
@@ -82,11 +83,12 @@ src/
 
 All database tables defined here via Drizzle:
 
-- `user` — Custom fields: `role`, `balance`, `shortCode`
+- `user` — Custom fields: `role`, `balance`, `shortCode`, `accountType`
 - `session`, `account`, `verification` — BetterAuth tables
-- `event` — Tournament/event definitions
+- `event` — Tournament/event definitions with dual pricing (`costCompany`, `costPlusOne`)
 - `eventSignup` — User-to-event mapping with status (enum values: listed/waitlist/locked/withdrawn/removed)
 - `transaction` — Balance change ledger (enum values: deposit/deduction)
+- `companyDomain` — Configurable email domains for auto-classifying users as Company type
 
 ### Shared Types (`src/lib/types.ts`)
 
@@ -110,17 +112,28 @@ export enum UserRole {
 	User = 'user',
 	Admin = 'admin'
 }
-```
 
-Note: Database columns use `text` type (SQLite limitation). TypeScript enums provide type safety at the application level.
+export enum AccountType {
+	PlusOne = 'plusone',
+	Company = 'company'
+}
+```
 
 ### Auth (`src/lib/server/auth.ts`)
 
 BetterAuth configuration with:
 
 - Email/password provider
-- Custom user fields (`role`, `balance`, `shortCode`)
+- Custom user fields (`role`, `balance`, `shortCode`, `accountType`)
 - Session management
+- Automatic account type assignment based on email domain on user creation
+
+### Account Management (`src/lib/server/account.ts`)
+
+Helper functions for account type management:
+
+- `determineAccountType(email)` — Checks if email domain matches any company domain
+- `updateUserAccountType(userId, email)` — Updates user's account type based on their email
 
 ### Background Services (`src/hooks.server.ts`)
 
@@ -239,19 +252,19 @@ export const actions = {
 
 ## Important Files
 
-| File                                 | Purpose                                       |
+| File                                  | Purpose                                       |
 | ------------------------------------- | --------------------------------------------- |
-| `src/lib/server/db/schema.ts`        | **Single source of truth** for all DB tables  |
-| `src/lib/server/auth.ts`             | Auth configuration, session handling          |
-| `src/lib/server/upbank.ts`           | Up Bank API integration                       |
-| `src/lib/server/deadline.ts`         | Background deadline processing                |
-| `src/hooks.server.ts`                | Initializes background services               |
-| `src/lib/components/EventForm.svelte` | Shared event form (create/edit)             |
-| `src/lib/types.ts`                   | TypeScript enums for status/type/role        |
-| `src/app.d.ts`                       | TypeScript types for `App.Locals`, `PageData` |
-| `svelte.config.js`                   | SvelteKit adapter configuration               |
-| `vite.config.ts`                     | Vite + Tailwind plugin config                 |
-| `drizzle.config.ts`                  | Drizzle ORM configuration                     |
+| `src/lib/server/db/schema.ts`         | **Single source of truth** for all DB tables  |
+| `src/lib/server/auth.ts`              | Auth configuration, session handling          |
+| `src/lib/server/upbank.ts`            | Up Bank API integration                       |
+| `src/lib/server/deadline.ts`          | Background deadline processing                |
+| `src/hooks.server.ts`                 | Initializes background services               |
+| `src/lib/components/EventForm.svelte` | Shared event form (create/edit)               |
+| `src/lib/types.ts`                    | TypeScript enums for status/type/role         |
+| `src/app.d.ts`                        | TypeScript types for `App.Locals`, `PageData` |
+| `svelte.config.js`                    | SvelteKit adapter configuration               |
+| `vite.config.ts`                      | Vite + Tailwind plugin config                 |
+| `drizzle.config.ts`                   | Drizzle ORM configuration                     |
 
 ### Entry Points
 

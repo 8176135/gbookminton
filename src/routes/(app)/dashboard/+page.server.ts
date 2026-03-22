@@ -1,8 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { event, eventSignup, user } from '$lib/server/db/schema';
-import { and, asc, desc, eq, lt, or, sql } from 'drizzle-orm';
-import { auth } from '$lib/server/auth';
+import { event, eventSignup, user, transaction } from '$lib/server/db/schema';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load = (async ({ locals }) => {
@@ -114,6 +113,11 @@ export const actions: Actions = {
 			);
 
 		const status = count < ev.capacity ? 'listed' : 'waitlist';
+		const shouldCharge = status === 'listed';
+
+		// Get user's account type to determine cost
+		const [currentUser] = await db.select().from(user).where(eq(user.id, session.user.id)).limit(1);
+		const cost = currentUser.accountType === 'company' ? ev.costCompany : ev.costPlusOne;
 
 		if (existing) {
 			await db
@@ -127,6 +131,25 @@ export const actions: Actions = {
 				eventId,
 				status,
 				createdAt: new Date()
+			});
+		}
+
+		// Charge user if they got listed (not waitlisted)
+		if (shouldCharge && cost > 0) {
+			// Deduct from balance
+			await db
+				.update(user)
+				.set({ balance: currentUser.balance - cost, updatedAt: new Date() })
+				.where(eq(user.id, session.user.id));
+
+			// Record transaction
+			await db.insert(transaction).values({
+				id: crypto.randomUUID(),
+				userId: session.user.id,
+				amount: cost,
+				reference: eventId,
+				type: 'deduction',
+				date: new Date()
 			});
 		}
 	},

@@ -29,11 +29,13 @@ export async function processDeadlines() {
 					const { signup, user: u } = row;
 
 					if (signup.status === 'listed') {
-						if (u.balance >= ev.cost) {
+						// Use average of both prices since we don't track individual signup costs
+						const cost = Math.round((ev.costCompany + ev.costPlusOne) / 2);
+						if (u.balance >= cost) {
 							// Deduct balance
 							await tx
 								.update(user)
-								.set({ balance: u.balance - ev.cost })
+								.set({ balance: u.balance - cost })
 								.where(eq(user.id, u.id));
 
 							// Lock signup
@@ -46,7 +48,7 @@ export async function processDeadlines() {
 							await tx.insert(transaction).values({
 								id: crypto.randomUUID(),
 								userId: u.id,
-								amount: -ev.cost, // negative for deductions
+								amount: -cost, // negative for deductions
 								reference: ev.id,
 								type: 'deduction',
 								date: new Date()
@@ -59,7 +61,7 @@ export async function processDeadlines() {
 								.where(eq(eventSignup.id, signup.id));
 						}
 					} else if (signup.status === 'waitlist') {
-						// Waitlist members don't get in; mark them as withdrawn or keep them on waitlist
+						// Waitlist members don't get in; mark them as withdrawn
 						await tx
 							.update(eventSignup)
 							.set({ status: 'withdrawn' })

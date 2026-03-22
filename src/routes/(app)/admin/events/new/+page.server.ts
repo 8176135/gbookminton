@@ -28,11 +28,10 @@ export const actions: Actions = {
 		const location = data.get('location') as string;
 		const description = data.get('description') as string;
 		const capacity = parseInt(data.get('capacity') as string, 10);
-		const costDollars = parseFloat(data.get('cost') as string);
+		const costCompanyDollars = parseFloat(data.get('costCompany') as string);
+		const costPlusOneDollars = parseFloat(data.get('costPlusOne') as string);
 		const deadlineStr = data.get('deadline') as string;
 		const isPrivate = data.get('isPrivate') === 'true';
-
-		const costCents = Math.round(costDollars * 100);
 
 		await db.insert(event).values({
 			id: crypto.randomUUID(),
@@ -42,13 +41,13 @@ export const actions: Actions = {
 			duration,
 			description,
 			capacity,
-			cost: costCents,
+			costCompany: Math.round(costCompanyDollars * 100),
+			costPlusOne: Math.round(costPlusOneDollars * 100),
 			deadline: new Date(deadlineStr),
 			isPrivate,
 			createdAt: new Date(),
 			updatedAt: new Date()
 		});
-
 		throw redirect(303, '/admin');
 	}
 };

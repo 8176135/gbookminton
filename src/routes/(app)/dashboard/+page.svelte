@@ -34,6 +34,16 @@
 					</p>
 					<p class="text-2xl font-bold text-emerald-400">${(user.balance / 100).toFixed(2)}</p>
 				</div>
+				<div class="rounded-xl border border-gray-800 bg-gray-900/50 p-4 backdrop-blur-xl">
+					<p class="text-xs font-semibold tracking-wider text-gray-500 uppercase">Account Type</p>
+					<p
+						class="text-sm font-semibold {user.accountType === 'company'
+							? 'text-blue-400'
+							: 'text-emerald-400'}"
+					>
+						{user.accountType === 'company' ? 'Company' : 'PlusOne'}
+					</p>
+				</div>
 				<div
 					class="flex flex-col justify-center rounded-xl border border-gray-800 bg-gray-900/50 p-4 backdrop-blur-xl"
 				>
@@ -77,11 +87,20 @@
 							<p class="mb-4 text-sm text-gray-400">
 								<LocalDate date={ev.date} /> • {ev.duration} mins
 							</p>
-
 							<div class="mb-6 grow space-y-2 text-sm text-gray-300">
 								<p><span class="font-medium text-gray-500">Location:</span> {ev.location}</p>
 								<p>
-									<span class="font-medium text-gray-500">Cost:</span> ${(ev.cost / 100).toFixed(2)}
+									<span class="font-medium text-gray-500">Your Price:</span>
+									<span
+										class={user.accountType === 'company' ? 'text-blue-400' : 'text-emerald-400'}
+									>
+										${(
+											(user.accountType === 'company' ? ev.costCompany : ev.costPlusOne) / 100
+										).toFixed(2)}
+									</span>
+									<span class="text-gray-500">
+										({user.accountType === 'company' ? 'Company' : 'PlusOne'})
+									</span>
 								</p>
 								<p>
 									<span class="font-medium text-gray-500">Spots:</span>
@@ -130,11 +149,18 @@
 						<p class="mb-4 text-sm text-gray-400">
 							<LocalDate date={ev.date} /> • {ev.duration} mins
 						</p>
-
 						<div class="mb-6 grow space-y-2 text-sm text-gray-300">
 							<p><span class="font-medium text-gray-500">Location:</span> {ev.location}</p>
 							<p>
-								<span class="font-medium text-gray-500">Cost:</span> ${(ev.cost / 100).toFixed(2)}
+								<span class="font-medium text-gray-500">Your Price:</span>
+								<span class={user.accountType === 'company' ? 'text-blue-400' : 'text-emerald-400'}>
+									${(
+										(user.accountType === 'company' ? ev.costCompany : ev.costPlusOne) / 100
+									).toFixed(2)}
+								</span>
+								<span class="text-gray-500">
+									({user.accountType === 'company' ? 'Company' : 'PlusOne'})
+								</span>
 							</p>
 							<p>
 								<span class="font-medium text-gray-500">Spots:</span>
@@ -278,13 +304,16 @@
 								<p class="mb-4 text-sm text-gray-500">
 									<LocalDate date={ev.date} /> • {ev.duration} mins
 								</p>
-
 								<div class="mb-6 grow space-y-2 text-sm text-gray-400">
 									<p><span class="font-medium text-gray-500">Location:</span> {ev.location}</p>
 									<p>
-										<span class="font-medium text-gray-500">Cost:</span> ${(ev.cost / 100).toFixed(
-											2
-										)}
+										<span class="font-medium text-gray-500">Cost:</span>
+										<span>
+											<span class="mx-1 text-blue-400">${(ev.costCompany / 100).toFixed(2)}</span>
+											<span class="text-gray-500">/</span>
+											<span class="mx-1 text-emerald-400">${(ev.costPlusOne / 100).toFixed(2)}</span
+											>
+										</span>
 									</p>
 									<p>
 										<span class="font-medium text-gray-500">Spots:</span>

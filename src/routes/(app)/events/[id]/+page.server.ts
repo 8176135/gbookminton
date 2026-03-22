@@ -79,7 +79,8 @@ export const actions: Actions = {
 		const location = data.get('location') as string;
 		const description = data.get('description') as string;
 		const capacity = parseInt(data.get('capacity') as string, 10);
-		const costDollars = parseFloat(data.get('cost') as string);
+		const costCompanyDollars = parseFloat(data.get('costCompany') as string);
+		const costPlusOneDollars = parseFloat(data.get('costPlusOne') as string);
 		const deadlineStr = data.get('deadline') as string;
 		const isPrivate = data.get('isPrivate') === 'true';
 
@@ -89,7 +90,8 @@ export const actions: Actions = {
 			!deadlineStr ||
 			isNaN(duration) ||
 			isNaN(capacity) ||
-			isNaN(costDollars)
+			isNaN(costCompanyDollars) ||
+			isNaN(costPlusOneDollars)
 		) {
 			return fail(400, { error: 'Invalid form data' });
 		}
@@ -103,7 +105,8 @@ export const actions: Actions = {
 				location,
 				description,
 				capacity,
-				cost: Math.round(costDollars * 100),
+				costCompany: Math.round(costCompanyDollars * 100),
+				costPlusOne: Math.round(costPlusOneDollars * 100),
 				deadline: new Date(deadlineStr),
 				isPrivate,
 				updatedAt: new Date()

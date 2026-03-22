@@ -54,10 +54,11 @@
 						duration: ev.duration,
 						description: ev.description,
 						capacity: ev.capacity,
-						cost: ev.cost,
+						costCompany: ev.costCompany,
+						costPlusOne: ev.costPlusOne,
 						isPrivate: ev.isPrivate
 					}}
-					form={form}
+					{form}
 					action="?/editEvent"
 					onCancel={() => (editing = false)}
 				/>
@@ -69,28 +70,37 @@
 						<p class="text-gray-400">
 							<LocalDate date={ev.date} /> • {ev.location} • {ev.duration} mins
 						</p>
-						<div class="mt-2 flex flex-wrap items-center gap-3 text-sm">
-							<span class="font-medium text-emerald-400">${(ev.cost / 100).toFixed(2)}</span>
-							{#if ev.isPrivate && isAdmin}
-								<span
-									class="rounded-full border border-yellow-500/30 bg-yellow-500/10 px-2.5 py-0.5 text-xs font-semibold text-yellow-400"
+						<!-- Pricing -->
+						<div class="mt-2 flex flex-wrap items-center gap-4 text-sm">
+							<div class="flex items-center gap-2">
+								<span class="text-gray-500">Company:</span>
+								<span class="font-medium text-blue-400">${(ev.costCompany / 100).toFixed(2)}</span>
+							</div>
+							<div class="flex items-center gap-2">
+								<span class="text-gray-500">PlusOne:</span>
+								<span class="font-medium text-emerald-400"
+									>${(ev.costPlusOne / 100).toFixed(2)}</span
 								>
-									🔒 Private
-								</span>
-							{/if}
-							{#if ev.isLocked}
-								<span
-									class="rounded-full border border-red-500/30 bg-red-500/10 px-2.5 py-0.5 text-xs font-semibold text-red-400"
-								>
-									Locked
-								</span>
-							{/if}
+							</div>
 						</div>
+						{#if ev.isPrivate && isAdmin}
+							<span
+								class="mt-2 inline-flex rounded-full border border-yellow-500/30 bg-yellow-500/10 px-2.5 py-0.5 text-xs font-semibold text-yellow-400"
+							>
+								🔒 Private
+							</span>
+						{/if}
+						{#if ev.isLocked}
+							<span
+								class="mt-2 inline-flex rounded-full border border-red-500/30 bg-red-500/10 px-2.5 py-0.5 text-xs font-semibold text-red-400"
+							>
+								Locked
+							</span>
+						{/if}
 						{#if ev.description}
 							<p class="mt-3 max-w-2xl text-sm text-gray-400">{ev.description}</p>
 						{/if}
 					</div>
-
 					{#if isAdmin}
 						<button
 							onclick={() => (editing = true)}
@@ -138,14 +148,6 @@
 											<p class="text-sm text-gray-400">{player.user.email}</p>
 										{/if}
 									</div>
-									<span
-										class="rounded-full px-2.5 py-1 text-xs font-semibold {player.signup
-											.status === 'locked'
-											? 'border border-red-500/20 bg-red-500/20 text-red-300'
-											: 'border border-emerald-500/20 bg-emerald-500/20 text-emerald-300'}"
-									>
-										{player.signup.status}
-									</span>
 								</li>
 							{/each}
 							{#if listed.length === 0}
@@ -226,20 +228,16 @@
 					<p class="text-sm text-gray-400">
 						<span class="font-medium text-white">Your status:</span>
 						<span
-							class="ml-2 rounded-full px-2.5 py-1 text-xs font-semibold
-							{userSignupStatus === 'listed'
+							class="ml-2 rounded-full px-2.5 py-1 text-xs font-semibold {userSignupStatus ===
+							'listed'
 								? 'border border-emerald-500/20 bg-emerald-500/20 text-emerald-300'
-								: ''}
-							{userSignupStatus === 'waitlist'
+								: ''} {userSignupStatus === 'waitlist'
 								? 'border border-yellow-500/20 bg-yellow-500/20 text-yellow-300'
-								: ''}
-							{userSignupStatus === 'locked'
+								: ''} {userSignupStatus === 'locked'
 								? 'border border-indigo-500/20 bg-indigo-500/20 text-indigo-300'
-								: ''}
-							{userSignupStatus === 'withdrawn'
+								: ''} {userSignupStatus === 'withdrawn'
 								? 'border border-gray-500/20 bg-gray-500/20 text-gray-400'
-								: ''}
-							{userSignupStatus === 'removed'
+								: ''} {userSignupStatus === 'removed'
 								? 'border border-red-500/20 bg-red-500/20 text-red-300'
 								: ''}"
 						>
