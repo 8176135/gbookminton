@@ -5,6 +5,7 @@
 	let { data }: PageProps = $props();
 	let events = $derived(data.events);
 	let showPast = $derived(data.showPast);
+	let countMap = $derived(data.countMap);
 
 	const now = new Date();
 
@@ -56,13 +57,14 @@
 							<th class="px-6 py-4 font-medium">Event Title</th>
 							<th class="px-6 py-4 font-medium">Date & Time</th>
 							<th class="px-6 py-4 font-medium">Location</th>
-							<th class="px-6 py-4 font-medium">Capacity</th>
+							<th class="px-6 py-4 font-medium">Enrolled / Waitlist</th>
 							<th class="px-6 py-4 font-medium">Cost / Deadline</th>
 							<th class="px-6 py-4 text-right font-medium">Actions</th>
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-gray-800">
 						{#each events as ev}
+							{@const counts = countMap[ev.id] || { enrolled: 0, waitlisted: 0 }}
 							<tr class="transition hover:bg-gray-800/30">
 								<td class="px-6 py-4 font-medium text-white">{ev.title}</td>
 								<td class="px-6 py-4"
@@ -70,7 +72,12 @@
 									<span class="text-xs text-gray-500">({ev.duration} min)</span></td
 								>
 								<td class="px-6 py-4">{ev.location}</td>
-								<td class="px-6 py-4">{ev.capacity}</td>
+								<td class="px-6 py-4">
+									<span class="font-medium">{counts.enrolled}</span> / {ev.capacity}
+									{#if counts.waitlisted > 0}
+										<span class="ml-2 text-yellow-400">({counts.waitlisted} waitlist)</span>
+									{/if}
+								</td>
 								<td class="px-6 py-4">
 									<div class="font-medium text-emerald-400">${(ev.cost / 100).toFixed(2)}</div>
 									<div class="text-xs text-red-400"><LocalDate date={ev.deadline} /></div>
@@ -107,13 +114,14 @@
 									<th class="px-6 py-4 font-medium">Event Title</th>
 									<th class="px-6 py-4 font-medium">Date & Time</th>
 									<th class="px-6 py-4 font-medium">Location</th>
-									<th class="px-6 py-4 font-medium">Capacity</th>
+									<th class="px-6 py-4 font-medium">Enrolled / Waitlist</th>
 									<th class="px-6 py-4 font-medium">Cost / Deadline</th>
 									<th class="px-6 py-4 text-right font-medium">Actions</th>
 								</tr>
 							</thead>
 							<tbody class="divide-y divide-gray-800">
 								{#each currentEvents as ev}
+									{@const counts = countMap[ev.id] || { enrolled: 0, waitlisted: 0 }}
 									<tr class="transition hover:bg-gray-800/30">
 										<td class="px-6 py-4 font-medium text-white">{ev.title}</td>
 										<td class="px-6 py-4"
@@ -121,7 +129,12 @@
 											<span class="text-xs text-gray-500">({ev.duration} min)</span></td
 										>
 										<td class="px-6 py-4">{ev.location}</td>
-										<td class="px-6 py-4">{ev.capacity}</td>
+										<td class="px-6 py-4">
+											<span class="font-medium">{counts.enrolled}</span> / {ev.capacity}
+											{#if counts.waitlisted > 0}
+												<span class="ml-2 text-yellow-400">({counts.waitlisted} waitlist)</span>
+											{/if}
+										</td>
 										<td class="px-6 py-4">
 											<div class="font-medium text-emerald-400">${(ev.cost / 100).toFixed(2)}</div>
 											<div class="text-xs text-red-400"><LocalDate date={ev.deadline} /></div>
@@ -154,13 +167,14 @@
 									<th class="px-6 py-4 font-medium">Event Title</th>
 									<th class="px-6 py-4 font-medium">Date & Time</th>
 									<th class="px-6 py-4 font-medium">Location</th>
-									<th class="px-6 py-4 font-medium">Capacity</th>
+									<th class="px-6 py-4 font-medium">Enrolled / Waitlist</th>
 									<th class="px-6 py-4 font-medium">Cost / Deadline</th>
 									<th class="px-6 py-4 text-right font-medium">Actions</th>
 								</tr>
 							</thead>
 							<tbody class="divide-y divide-gray-800/50">
 								{#each pastEvents as ev}
+									{@const counts = countMap[ev.id] || { enrolled: 0, waitlisted: 0 }}
 									<tr class="opacity-75 transition hover:bg-gray-800/20">
 										<td class="px-6 py-4 font-medium text-gray-300">{ev.title}</td>
 										<td class="px-6 py-4 text-gray-500"
@@ -168,8 +182,14 @@
 											<span class="text-xs text-gray-600">({ev.duration} min)</span></td
 										>
 										<td class="px-6 py-4 text-gray-500">{ev.location}</td>
-										<td class="px-6 py-4 text-gray-500">{ev.capacity}</td>
 										<td class="px-6 py-4 text-gray-500">
+											{counts.enrolled} / {ev.capacity}
+											{#if counts.waitlisted > 0}
+												<span class="text-yellow-500">({counts.waitlisted} waitlist)</span>
+											{/if}
+										</td>
+										<td class="px-6 py-4 text-gray-500">
+											<div>${(ev.cost / 100).toFixed(2)}</div>
 											<div>${(ev.cost / 100).toFixed(2)}</div>
 											<div class="text-xs"><LocalDate date={ev.deadline} /></div>
 										</td>
