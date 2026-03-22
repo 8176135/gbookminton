@@ -11,6 +11,7 @@
 Gbookminton is a full-stack web application for managing group memberships and tournaments. It handles user authentication, event management, signup tracking, automated payment matching via Up Bank integration, and balance-based access control.
 
 **Key Integrations**:
+
 - **Up Bank API**: Polls for deposits and matches via shortcodes for automated balance top-ups
 - **Resend**: Email notifications for events and reminders
 - **BetterAuth**: Session-based authentication with custom user fields
@@ -20,17 +21,19 @@ Gbookminton is a full-stack web application for managing group memberships and t
 ## Architecture & Data Flow
 
 ### Stack
-| Layer | Technology |
-|-------|------------|
-| Framework | SvelteKit 5 (SSR + client) |
-| Runtime | Bun |
-| Database | SQLite via `bun:sqlite` + Drizzle ORM |
-| Styling | Tailwind CSS v4 |
-| Auth | BetterAuth |
-| Build | Vite |
-| Types | TypeScript (strict) |
+
+| Layer     | Technology                            |
+| --------- | ------------------------------------- |
+| Framework | SvelteKit 5 (SSR + client)            |
+| Runtime   | Bun                                   |
+| Database  | SQLite via `bun:sqlite` + Drizzle ORM |
+| Styling   | Tailwind CSS v4                       |
+| Auth      | BetterAuth                            |
+| Build     | Vite                                  |
+| Types     | TypeScript (strict)                   |
 
 ### Directory Structure
+
 ```
 src/
 ├── lib/                    # Shared library code
@@ -57,6 +60,7 @@ src/
 ```
 
 ### Data Flow
+
 1. **Request** → SvelteKit route (+page.server.ts)
 2. **Auth Check** → BetterAuth session validation
 3. **Data Fetch** → Drizzle queries against SQLite
@@ -64,6 +68,7 @@ src/
 5. **Response** → Svelte page with reactive state ($state, $derived)
 
 ### Route Groups
+
 - `(app)/` — Protected routes requiring authentication (redirects to `/signup` if unauthenticated)
 - Root level — Public routes (signup, login, home)
 
@@ -72,7 +77,9 @@ src/
 ## Key Modules
 
 ### Database (`src/lib/server/db/schema.ts`)
+
 All database tables defined here via Drizzle:
+
 - `user` — Custom fields: `role`, `balance`, `shortCode`
 - `session`, `account`, `verification` — BetterAuth tables
 - `event` — Tournament/event definitions
@@ -80,17 +87,22 @@ All database tables defined here via Drizzle:
 - `transaction` — Balance change ledger
 
 ### Auth (`src/lib/server/auth.ts`)
+
 BetterAuth configuration with:
+
 - Email/password provider
 - Custom user fields (`role`, `balance`, `shortCode`)
 - Session management
 
 ### Background Services (`src/hooks.server.ts`)
+
 Two `setInterval`-based background services initialized at startup:
+
 1. **Up Bank Polling** (`src/lib/server/upbank.ts`) — Checks for deposits, matches shortcodes
 2. **Deadline Processor** (`src/lib/server/deadline.ts`) — Processes event deadlines, deducts balances
 
 ### API Integrations
+
 - **Up Bank** (`src/lib/server/upbank.ts`): OAuth-based, polls for transactions
 - **Resend** (`src/lib/server/resend.ts`): Email templating and sending
 
@@ -135,11 +147,13 @@ bun run prepare       # Runs svelte-kit sync
 ## Code Conventions
 
 ### TypeScript
+
 - Strict mode enabled via `tsconfig.json`
 - Use `interface` for public APIs, `type` for unions/intersections
 - Avoid `any`; use `unknown` and narrow appropriately
 
 ### Svelte 5 Patterns
+
 ```svelte
 <!-- Props with $props() -->
 <script lang="ts">
@@ -158,27 +172,31 @@ bun run prepare       # Runs svelte-kit sync
 ```
 
 ### Server vs Client
+
 - Files named `*.server.ts` — Server-only, never sent to client
 - Files named `*.server.ts` in routes — Server-side load functions
 - Use `+page.server.ts` for form actions and server-side data fetching
 
 ### Database Access
+
 - All DB queries in `src/lib/server/db/` or `+page.server.ts` files
 - Use Drizzle ORM for type-safe queries
 - Never expose raw SQL to client
 
 ### Form Actions
+
 ```typescript
 // In +page.server.ts
 export const actions = {
-  default: async ({ request }) => {
-    const data = await request.formData();
-    // Handle form submission
-  }
+	default: async ({ request }) => {
+		const data = await request.formData();
+		// Handle form submission
+	}
 };
 ```
 
 ### Error Handling
+
 - Use SvelteKit's `throw redirect()` for navigation
 - Return `{ error: string }` from actions for inline errors
 - Never expose stack traces to client
@@ -187,19 +205,20 @@ export const actions = {
 
 ## Important Files
 
-| File | Purpose |
-|------|---------|
-| `src/lib/server/db/schema.ts` | **Single source of truth** for all DB tables |
-| `src/lib/server/auth.ts` | Auth configuration, session handling |
-| `src/lib/server/upbank.ts` | Up Bank API integration |
-| `src/lib/server/deadline.ts` | Background deadline processing |
-| `src/hooks.server.ts` | Initializes background services |
-| `src/app.d.ts` | TypeScript types for `App.Locals`, `PageData` |
-| `svelte.config.js` | SvelteKit adapter configuration |
-| `vite.config.ts` | Vite + Tailwind plugin config |
-| `drizzle.config.ts` | Drizzle ORM configuration |
+| File                          | Purpose                                       |
+| ----------------------------- | --------------------------------------------- |
+| `src/lib/server/db/schema.ts` | **Single source of truth** for all DB tables  |
+| `src/lib/server/auth.ts`      | Auth configuration, session handling          |
+| `src/lib/server/upbank.ts`    | Up Bank API integration                       |
+| `src/lib/server/deadline.ts`  | Background deadline processing                |
+| `src/hooks.server.ts`         | Initializes background services               |
+| `src/app.d.ts`                | TypeScript types for `App.Locals`, `PageData` |
+| `svelte.config.js`            | SvelteKit adapter configuration               |
+| `vite.config.ts`              | Vite + Tailwind plugin config                 |
+| `drizzle.config.ts`           | Drizzle ORM configuration                     |
 
 ### Entry Points
+
 - **Dev**: `bun run dev` → Vite dev server
 - **Prod**: `bun run build` → SvelteKit build → `node build`
 - **Migrations**: `bun migrate.ts` for database setup
@@ -209,18 +228,22 @@ export const actions = {
 ## Runtime & Tooling
 
 ### Environment
+
 - **Runtime**: Bun (required, not Node.js)
 - **Package Manager**: pnpm (based on pnpm-lock.yaml presence)
 - **Dev Shell**: Nix via `devenv.yaml` (optional but recommended)
 
 ### VSCode Extensions (recommended)
+
 ```json
 // .vscode/extensions.json
 ["svelte.svelte-vscode", "bradlc.vscode-tailwindcss", "esbenp.prettier-vscode"]
 ```
 
 ### Environment Variables
+
 Required variables (typically in `.env`):
+
 - `DATABASE_URL` or SQLite file path
 - Up Bank API credentials
 - Resend API key
@@ -238,6 +261,7 @@ Required variables (typically in `.env`):
 - No test files (`*.test.ts`, `*.spec.ts`)
 
 **Note**: This is a known gap. When adding tests, consider:
+
 - Vitest (already a transitive dep via `better-auth`)
 - Playwright for E2E (SvelteKit recommends)
 - Unit tests for server utilities (`src/lib/server/`)
@@ -247,18 +271,23 @@ Required variables (typically in `.env`):
 ## Architecture Notes
 
 ### Privacy-Aware Event Visibility
+
 Event details (`/events/[id]`) show different information based on:
+
 - User authentication status
 - User role (admin vs regular user)
 - Event visibility settings
 
 ### Balance-Based Access Control
+
 - Users maintain a `balance` field
 - Event signup may deduct balance at deadline
 - Up Bank integration allows automated top-ups via shortcodes
 
 ### Background Services
+
 Two persistent processes run via `setInterval` in `hooks.server.ts`:
+
 1. **Up Bank Polling**: Every ~60 seconds, checks for new deposits
 2. **Deadline Processing**: Checks event deadlines, deducts balances, sends reminders
 
@@ -267,37 +296,41 @@ Two persistent processes run via `setInterval` in `hooks.server.ts`:
 ## Common Patterns
 
 ### Route Protection
+
 ```typescript
 // +page.server.ts
 import { redirect } from '@sveltejs/kit';
 
 export const load = async ({ locals }) => {
-  if (!locals.session) {
-    throw redirect(303, '/signup');
-  }
-  return { user: locals.user };
+	if (!locals.session) {
+		throw redirect(303, '/signup');
+	}
+	return { user: locals.user };
 };
 ```
 
 ### Admin-Only Routes
+
 ```typescript
 // In load function or hooks
 if (locals.user?.role !== 'admin') {
-  throw redirect(303, '/dashboard');
+	throw redirect(303, '/dashboard');
 }
 ```
 
 ### Form with Server Action
+
 ```svelte
 <form method="POST" action="?/signup">
-  <button>Sign Up</button>
+	<button>Sign Up</button>
 </form>
 ```
 
 ### Component Props
+
 ```svelte
 <!-- LocalDate.svelte pattern -->
 <script lang="ts">
-  let { date }: { date: Date | string } = $props();
+	let { date }: { date: Date | string } = $props();
 </script>
 ```
