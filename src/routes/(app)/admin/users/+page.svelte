@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { PageProps } from './$types';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { Badge } from '$lib/components/ui/badge/index.js';
 
 	let { data, form }: PageProps = $props();
 	let users = $derived(data.users);
@@ -28,22 +30,17 @@
 	<div class="mx-auto max-w-7xl">
 		<header class="mb-8">
 			<div class="mb-6 flex items-center gap-4">
-				<a
-					href="/admin"
-					class="rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-300 transition hover:bg-gray-700"
-				>
-					Back to Dashboard
-				</a>
+				<Button href="/admin" variant="outline">Back to Dashboard</Button>
 			</div>
 			<div>
 				<h1 class="text-3xl font-bold tracking-tight text-white">Manage Users</h1>
-				<p class="text-sm text-gray-400">View and manage user accounts and types.</p>
+				<p class="text-muted-foreground text-sm">View and manage user accounts and types.</p>
 			</div>
 		</header>
 
 		{#if form?.error}
 			<div
-				class="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400"
+				class="border-destructive/30 bg-destructive/10 text-destructive mb-6 rounded-xl border px-4 py-3 text-sm"
 			>
 				{form.error}
 			</div>
@@ -91,38 +88,26 @@
 										<input type="hidden" name="userId" value={u.id} />
 										<div class="flex items-center gap-2">
 											<select
-												name="accountType"
+												name="accountTypeSelect"
 												bind:value={selectedType}
-												class="rounded-lg border border-gray-700 bg-gray-800 px-3 py-1.5 text-sm text-white focus:border-indigo-500 focus:outline-none"
+												class="border-input flex h-8 w-32 items-center justify-between gap-1.5 rounded-lg border bg-transparent py-2 pr-2 pl-2.5 text-sm"
 											>
 												<option value="plusone">PlusOne</option>
 												<option value="company">Company</option>
 											</select>
-											<button
-												type="submit"
-												disabled={saving}
-												class="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:opacity-50"
-											>
+											<input type="hidden" name="accountType" value={selectedType} />
+											<Button type="submit" size="sm" disabled={saving}>
 												{saving ? 'Saving...' : 'Save'}
-											</button>
-											<button
-												type="button"
-												onclick={cancelEdit}
-												class="rounded-lg border border-gray-700 px-3 py-1.5 text-sm text-gray-300 transition hover:bg-gray-800"
-											>
+											</Button>
+											<Button type="button" variant="outline" size="sm" onclick={cancelEdit}>
 												Cancel
-											</button>
+											</Button>
 										</div>
 									</form>
+								{:else if u.accountType === 'company'}
+									<Badge variant="company">Company</Badge>
 								{:else}
-									<span
-										class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium {u.accountType ===
-										'company'
-											? 'bg-blue-500/20 text-blue-400'
-											: 'bg-emerald-500/20 text-emerald-400'}"
-									>
-										{u.accountType === 'company' ? 'Company' : 'PlusOne'}
-									</span>
+									<Badge variant="plusone">PlusOne</Badge>
 								{/if}
 							</td>
 							<td class="px-6 py-4">

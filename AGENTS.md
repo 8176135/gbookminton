@@ -46,7 +46,22 @@ src/
 │   │   ├── deadline.ts    # Background deadline processor
 │   │   └── resend.ts      # Email client
 │   ├── components/        # Reusable Svelte components
-│   │   └── EventForm.svelte # Shared event creation/editing form
+│   │   ├── EventForm.svelte # Shared event creation/editing form
+│   │   ├── LocalDate.svelte # Date/time display with relative formatting
+│   │   └── ui/             # shadcn-svelte UI components
+│   │       ├── button/     # Button with href support
+│   │       ├── badge/      # Status badges
+│   │       ├── input/      # Input with number stepper
+│   │       ├── input-group/# Input with prefix/suffix
+│   │       ├── label/      # Form labels
+│   │       ├── textarea/   # Multi-line text
+│   │       ├── switch/     # Toggle switch
+│   │       ├── field/      # Form field wrapper
+│   │       ├── calendar/   # Calendar component
+│   │       ├── popover/    # Popover overlay
+│   │       ├── select/     # Select dropdown
+│   │       ├── separator/  # Divider
+│   │       └── datetime-picker/ # Custom date+time picker
 │   └── types.ts           # TypeScript type definitions and enums
 ├── routes/                # SvelteKit file-based routing
 │   ├── (app)/             # Route group: authenticated routes
@@ -144,14 +159,40 @@ Two `setInterval`-based background services initialized at startup:
 
 ### Shared Components (`src/lib/components/`)
 
+#### shadcn-svelte UI Components (`src/lib/components/ui/`)
+
+The project uses [shadcn-svelte](https://shadcn-svelte.com/) for UI primitives. These are installed via CLI and live in `src/lib/components/ui/`:
+
+**Core Components**:
+
+- `button` — Button with href support, dark theme styled (indigo default, gray outline)
+- `input` — Input with custom number stepper (+/- buttons)
+- `input-group` — Input wrapper with prefix/suffix slots (e.g., `$` prefix)
+- `label` — Form label wrapper
+- `textarea` — Multi-line text input
+- `switch` — Toggle switch
+- `field` — Form field wrapper with label integration
+
+**Overlay Components**:
+
+- `calendar` — Calendar grid using bits-ui + @internationalized/date
+- `popover` — Popover overlay
+- `datetime-picker` — Custom date+time picker with calendar popup (self-contained)
+
+**Display Components**:
+
+- `badge` — Status badge with variants (default, secondary, outline, destructive)
+- `select` — Select dropdown
+- `separator` — Horizontal divider
+
+#### Application Components
+
 - **EventForm.svelte**: Shared component for event creation and editing. Used by:
   - `/admin/events/new` - Create event page
   - `/events/[id]` - Edit event (admin only)
+- **LocalDate.svelte**: Date/time display with relative formatting
 
 ### API Integrations
-
-- **Up Bank** (`src/lib/server/upbank.ts`): OAuth-based, polls for transactions
-- **Resend** (`src/lib/server/resend.ts`): Email templating and sending
 
 ---
 
@@ -218,6 +259,26 @@ bun run prepare       # Runs svelte-kit sync
 </script>
 ```
 
+### shadcn-svelte Components
+
+**Adding new components**:
+
+```bash
+bunx shadcn-svelte@latest add <component-name>
+```
+
+**Import pattern**: Always use the index.ts re-export:
+
+```typescript
+import { Button } from '$lib/components/ui/button/index.js';
+import { Input } from '$lib/components/ui/input/index.js';
+```
+
+**Dark theme styling**: Components are pre-styled for dark mode. Custom overrides in:
+
+- `src/lib/components/ui/button/button.svelte` - Button variants
+- `src/app.css` - Global theme variables and animations
+
 ### Server vs Client
 
 - Files named `*.server.ts` — Server-only, never sent to client
@@ -252,19 +313,38 @@ export const actions = {
 
 ## Important Files
 
-| File                                  | Purpose                                       |
-| ------------------------------------- | --------------------------------------------- |
-| `src/lib/server/db/schema.ts`         | **Single source of truth** for all DB tables  |
-| `src/lib/server/auth.ts`              | Auth configuration, session handling          |
-| `src/lib/server/upbank.ts`            | Up Bank API integration                       |
-| `src/lib/server/deadline.ts`          | Background deadline processing                |
-| `src/hooks.server.ts`                 | Initializes background services               |
-| `src/lib/components/EventForm.svelte` | Shared event form (create/edit)               |
-| `src/lib/types.ts`                    | TypeScript enums for status/type/role         |
-| `src/app.d.ts`                        | TypeScript types for `App.Locals`, `PageData` |
-| `svelte.config.js`                    | SvelteKit adapter configuration               |
-| `vite.config.ts`                      | Vite + Tailwind plugin config                 |
-| `drizzle.config.ts`                   | Drizzle ORM configuration                     |
+### Core Backend
+
+| File                          | Purpose                                      |
+| ----------------------------- | -------------------------------------------- |
+| `src/lib/server/db/schema.ts` | **Single source of truth** for all DB tables |
+| `src/lib/server/auth.ts`      | Auth configuration, session handling         |
+| `src/lib/server/upbank.ts`    | Up Bank API integration                      |
+| `src/lib/server/deadline.ts`  | Background deadline processing               |
+| `src/hooks.server.ts`         | Initializes background services              |
+
+### UI Components
+
+| File                                     | Purpose                                     |
+| ---------------------------------------- | ------------------------------------------- |
+| `src/lib/components/EventForm.svelte`    | Shared event form (create/edit)             |
+| `src/lib/components/ui/button/`          | Button with href support, dark theme styled |
+| `src/lib/components/ui/input/`           | Input with custom number stepper (+/-)      |
+| `src/lib/components/ui/input-group/`     | Input with prefix/suffix (e.g., `$` prefix) |
+| `src/lib/components/ui/datetime-picker/` | Custom calendar popup with time picker      |
+| `src/lib/components/ui/` (other)         | shadcn-svelte components (badge, switch...) |
+
+### Configuration
+
+| File                | Purpose                                       |
+| ------------------- | --------------------------------------------- |
+| `src/lib/types.ts`  | TypeScript enums for status/type/role         |
+| `src/app.d.ts`      | TypeScript types for `App.Locals`, `PageData` |
+| `src/app.css`       | Tailwind CSS v4 + dark mode + animations      |
+| `components.json`   | shadcn-svelte CLI configuration               |
+| `svelte.config.js`  | SvelteKit adapter configuration               |
+| `vite.config.ts`    | Vite + Tailwind plugin config                 |
+| `drizzle.config.ts` | Drizzle ORM configuration                     |
 
 ### Entry Points
 

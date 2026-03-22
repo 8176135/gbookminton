@@ -2,6 +2,8 @@
 	import { enhance } from '$app/forms';
 	import type { PageProps } from './$types';
 	import LocalDate from '$lib/components/LocalDate.svelte';
+	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
 
 	let { data }: PageProps = $props();
 	let user = $derived(data.user);
@@ -14,6 +16,36 @@
 
 	let loadingIds = $state<Record<string, boolean>>({});
 	let showPastEvents = $state(false);
+
+	function getStatusVariant(status: string | undefined) {
+		switch (status) {
+			case 'listed':
+				return 'outline';
+			case 'waitlist':
+				return 'outline';
+			case 'locked':
+				return 'secondary';
+			case 'removed':
+				return 'destructive';
+			default:
+				return 'outline';
+		}
+	}
+
+	function getStatusClass(status: string | undefined) {
+		switch (status) {
+			case 'listed':
+				return 'border-emerald-500/30 text-emerald-400';
+			case 'waitlist':
+				return 'border-yellow-500/30 text-yellow-400';
+			case 'locked':
+				return '';
+			case 'removed':
+				return '';
+			default:
+				return '';
+		}
+	}
 </script>
 
 <svelte:head>
@@ -25,7 +57,7 @@
 		<header class="mb-8 md:flex md:items-center md:justify-between">
 			<div>
 				<h1 class="text-3xl font-bold tracking-tight text-white">Welcome, {user.name}</h1>
-				<p class="text-gray-400">View upcoming events and manage your bookings.</p>
+				<p class="text-muted-foreground">View upcoming events and manage your bookings.</p>
 			</div>
 			<div class="mt-4 flex gap-4 md:mt-0">
 				<div class="rounded-xl border border-gray-800 bg-gray-900/50 p-4 backdrop-blur-xl">
@@ -36,13 +68,11 @@
 				</div>
 				<div class="rounded-xl border border-gray-800 bg-gray-900/50 p-4 backdrop-blur-xl">
 					<p class="text-xs font-semibold tracking-wider text-gray-500 uppercase">Account Type</p>
-					<p
-						class="text-sm font-semibold {user.accountType === 'company'
-							? 'text-blue-400'
-							: 'text-emerald-400'}"
-					>
-						{user.accountType === 'company' ? 'Company' : 'PlusOne'}
-					</p>
+					{#if user.accountType === 'company'}
+						<Badge variant="company">Company</Badge>
+					{:else}
+						<Badge variant="plusone">PlusOne</Badge>
+					{/if}
 				</div>
 				<div
 					class="flex flex-col justify-center rounded-xl border border-gray-800 bg-gray-900/50 p-4 backdrop-blur-xl"
@@ -84,13 +114,16 @@
 								class="mb-1 inline-block text-lg font-bold text-white transition hover:text-indigo-300"
 								>{ev.title}</a
 							>
-							<p class="mb-4 text-sm text-gray-400">
+							<p class="text-muted-foreground mb-4 text-sm">
 								<LocalDate date={ev.date} /> • {ev.duration} mins
 							</p>
 							<div class="mb-6 grow space-y-2 text-sm text-gray-300">
-								<p><span class="font-medium text-gray-500">Location:</span> {ev.location}</p>
 								<p>
-									<span class="font-medium text-gray-500">Your Price:</span>
+									<span class="text-muted-foreground font-medium">Location:</span>
+									{ev.location}
+								</p>
+								<p>
+									<span class="text-muted-foreground font-medium">Your Price:</span>
 									<span
 										class={user.accountType === 'company' ? 'text-blue-400' : 'text-emerald-400'}
 									>
@@ -98,22 +131,20 @@
 											(user.accountType === 'company' ? ev.costCompany : ev.costPlusOne) / 100
 										).toFixed(2)}
 									</span>
-									<span class="text-gray-500">
+									<span class="text-muted-foreground">
 										({user.accountType === 'company' ? 'Company' : 'PlusOne'})
 									</span>
 								</p>
 								<p>
-									<span class="font-medium text-gray-500">Spots:</span>
+									<span class="text-muted-foreground font-medium">Spots:</span>
 									<span class="text-emerald-400">{enrolled} / {ev.capacity}</span>
 								</p>
 							</div>
 
 							<div class="mt-auto flex items-center justify-between border-t border-gray-800 pt-4">
-								<span
-									class="rounded-full border border-emerald-500/20 bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-300"
+								<Badge variant="outline" class="border-emerald-500/30 text-emerald-400"
+									>Happening Now</Badge
 								>
-									Happening Now
-								</span>
 								<a
 									href="/events/{ev.id}"
 									class="text-sm font-medium text-indigo-400 hover:text-indigo-300"
@@ -146,57 +177,45 @@
 							class="mb-1 inline-block text-lg font-bold text-white transition hover:text-indigo-300"
 							>{ev.title}</a
 						>
-						<p class="mb-4 text-sm text-gray-400">
+						<p class="text-muted-foreground mb-4 text-sm">
 							<LocalDate date={ev.date} /> • {ev.duration} mins
 						</p>
 						<div class="mb-6 grow space-y-2 text-sm text-gray-300">
-							<p><span class="font-medium text-gray-500">Location:</span> {ev.location}</p>
+							<p><span class="text-muted-foreground font-medium">Location:</span> {ev.location}</p>
 							<p>
-								<span class="font-medium text-gray-500">Your Price:</span>
+								<span class="text-muted-foreground font-medium">Your Price:</span>
 								<span class={user.accountType === 'company' ? 'text-blue-400' : 'text-emerald-400'}>
 									${(
 										(user.accountType === 'company' ? ev.costCompany : ev.costPlusOne) / 100
 									).toFixed(2)}
 								</span>
-								<span class="text-gray-500">
+								<span class="text-muted-foreground">
 									({user.accountType === 'company' ? 'Company' : 'PlusOne'})
 								</span>
 							</p>
 							<p>
-								<span class="font-medium text-gray-500">Spots:</span>
-								<span class={isFull ? 'text-red-400' : 'text-emerald-400'}
-									>{enrolled} / {ev.capacity}</span
-								>
+								<span class="text-muted-foreground font-medium">Spots:</span>
+								<span class={isFull ? 'text-red-400' : 'text-emerald-400'}>
+									{enrolled} / {ev.capacity}
+								</span>
 							</p>
 							<p>
-								<span class="font-medium text-gray-500">Deadline:</span>
-								<span class={deadlinePassed ? 'text-red-400 line-through' : ''}
-									><LocalDate date={ev.deadline} /></span
-								>
+								<span class="text-muted-foreground font-medium">Deadline:</span>
+								<span class={deadlinePassed ? 'text-red-400 line-through' : ''}>
+									<LocalDate date={ev.deadline} />
+								</span>
 							</p>
 						</div>
 
 						<div class="mt-auto flex items-center justify-between border-t border-gray-800 pt-4">
 							{#if status === 'locked'}
-								<span
-									class="rounded-full border border-indigo-500/20 bg-indigo-500/20 px-3 py-1 text-xs font-semibold text-indigo-300"
-								>
-									Locked In
-								</span>
+								<Badge variant="secondary" class={getStatusClass(status)}>Locked In</Badge>
 							{:else if status === 'removed'}
-								<span
-									class="rounded-full border border-red-500/20 bg-red-500/20 px-3 py-1 text-xs font-semibold text-red-300"
-								>
-									Removed (No Funds)
-								</span>
+								<Badge variant="destructive">Removed (No Funds)</Badge>
 							{:else if status === 'listed' || status === 'waitlist'}
-								<span
-									class="rounded-full px-3 py-1 text-xs font-semibold {status === 'listed'
-										? 'border border-emerald-500/20 bg-emerald-500/20 text-emerald-300'
-										: 'border border-yellow-500/20 bg-yellow-500/20 text-yellow-300'}"
-								>
+								<Badge variant={getStatusVariant(status)} class={getStatusClass(status)}>
 									{status === 'listed' ? 'Enrolled' : 'Waitlisted'}
-								</span>
+								</Badge>
 
 								<form
 									method="POST"
@@ -232,11 +251,10 @@
 									}}
 								>
 									<input type="hidden" name="eventId" value={ev.id} />
-									<button
+									<Button
+										type="submit"
+										class="w-full"
 										disabled={deadlinePassed || loadingIds[ev.id]}
-										class="w-full rounded-xl {isFull
-											? 'bg-yellow-600 hover:bg-yellow-500'
-											: 'bg-indigo-600 hover:bg-indigo-500'} px-4 py-2 font-semibold text-white transition focus:ring-2 focus:outline-none disabled:opacity-50"
 									>
 										{#if loadingIds[ev.id]}
 											Processing...
@@ -247,7 +265,7 @@
 										{:else}
 											Sign Up
 										{/if}
-									</button>
+									</Button>
 								</form>
 							{/if}
 						</div>
@@ -257,7 +275,7 @@
 					<div
 						class="col-span-full rounded-2xl border border-gray-800 bg-gray-900/50 p-12 text-center"
 					>
-						<p class="text-gray-400">No upcoming events are available right now.</p>
+						<p class="text-muted-foreground">No upcoming events are available right now.</p>
 					</div>
 				{/if}
 			</div>
@@ -298,53 +316,38 @@
 							>
 								<a
 									href="/events/{ev.id}"
-									class="mb-1 inline-block text-lg font-bold text-gray-300 transition hover:text-indigo-300"
+									class="mb-1 inline-block text-lg font-bold text-white transition hover:text-indigo-300"
 									>{ev.title}</a
 								>
-								<p class="mb-4 text-sm text-gray-500">
+								<p class="text-muted-foreground mb-4 text-sm">
 									<LocalDate date={ev.date} /> • {ev.duration} mins
 								</p>
-								<div class="mb-6 grow space-y-2 text-sm text-gray-400">
-									<p><span class="font-medium text-gray-500">Location:</span> {ev.location}</p>
+								<div class="mb-6 grow space-y-2 text-sm text-gray-300">
 									<p>
-										<span class="font-medium text-gray-500">Cost:</span>
-										<span>
-											<span class="mx-1 text-blue-400">${(ev.costCompany / 100).toFixed(2)}</span>
-											<span class="text-gray-500">/</span>
-											<span class="mx-1 text-emerald-400">${(ev.costPlusOne / 100).toFixed(2)}</span
-											>
-										</span>
+										<span class="text-muted-foreground font-medium">Location:</span>
+										{ev.location}
 									</p>
 									<p>
-										<span class="font-medium text-gray-500">Spots:</span>
-										<span class="text-gray-400">{enrolled} / {ev.capacity}</span>
+										<span class="text-muted-foreground font-medium">Company:</span>
+										<span class="text-blue-400">${(ev.costCompany / 100).toFixed(2)}</span>
+									</p>
+									<p>
+										<span class="text-muted-foreground font-medium">PlusOne:</span>
+										<span class="text-emerald-400">${(ev.costPlusOne / 100).toFixed(2)}</span>
+									</p>
+									<p>
+										<span class="text-muted-foreground font-medium">Enrolled:</span>
+										<span class="text-gray-300">{enrolled} / {ev.capacity}</span>
 									</p>
 								</div>
 
 								<div class="mt-auto border-t border-gray-800 pt-4">
-									{#if status === 'locked'}
-										<span
-											class="rounded-full border border-indigo-500/20 bg-indigo-500/20 px-3 py-1 text-xs font-semibold text-indigo-300"
-										>
-											Locked In
-										</span>
-									{:else if status === 'removed'}
-										<span
-											class="rounded-full border border-red-500/20 bg-red-500/20 px-3 py-1 text-xs font-semibold text-red-300"
-										>
-											Removed
-										</span>
-									{:else if status === 'listed' || status === 'waitlist'}
-										<span
-											class="rounded-full px-3 py-1 text-xs font-semibold {status === 'listed'
-												? 'border border-emerald-500/20 bg-emerald-500/20 text-emerald-300'
-												: 'border border-yellow-500/20 bg-yellow-500/20 text-yellow-300'}"
-										>
-											{status === 'listed' ? 'Attended' : 'Waitlisted'}
-										</span>
-									{:else}
-										<span class="text-sm text-gray-500">Not Registered</span>
-									{/if}
+									<a
+										href="/events/{ev.id}"
+										class="text-sm font-medium text-indigo-400 hover:text-indigo-300"
+									>
+										View Details
+									</a>
 								</div>
 							</div>
 						{/each}

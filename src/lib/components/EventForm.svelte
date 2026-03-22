@@ -1,6 +1,14 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { onMount } from 'svelte';
+	import { Input } from '$lib/components/ui/input/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { Textarea } from '$lib/components/ui/textarea/index.js';
+	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { Switch } from '$lib/components/ui/switch/index.js';
+	import { Field } from '$lib/components/ui/field/index.js';
+	import { DateTimePicker } from '$lib/components/ui/datetime-picker/index.js';
 
 	interface Props {
 		mode: 'create' | 'edit';
@@ -26,41 +34,46 @@
 
 	let saving = $state(false);
 	let timezone = $state('');
-	let utcDate = $state('');
-	let utcDeadline = $state('');
-	let isPrivate = $state(event?.isPrivate ?? false);
+	let eventDate = $state<Date | null>(null);
+	let eventDeadline = $state<Date | null>(null);
+	let isPrivate = $state(false);
+
+	let costCompany = $state('');
+	let costPlusOne = $state('');
+	let duration = $state('');
+	let title = $state('');
+	let location = $state('');
+	let description = $state('');
+	let capacity = $state('');
 
 	onMount(() => {
 		timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 		if (event) {
+			eventDate = new Date(event.date);
+			eventDeadline = new Date(event.deadline);
 			isPrivate = event.isPrivate;
+			costCompany = (event.costCompany / 100).toFixed(2);
+			costPlusOne = (event.costPlusOne / 100).toFixed(2);
+			duration = String(event.duration);
+			title = event.title;
+			location = event.location;
+			description = event.description;
+			capacity = String(event.capacity);
+		} else {
+			costCompany = '15.00';
+			costPlusOne = '20.00';
+			duration = '120';
+			capacity = '10';
 		}
 	});
 
-	const handleSync = (e: Event) => {
-		const target = e.target as HTMLInputElement;
-		const date = new Date(target.value);
-		if (!isNaN(date.getTime())) {
-			if (target.name === 'date_local') {
-				utcDate = date.toISOString();
-			} else if (target.name === 'deadline_local') {
-				utcDeadline = date.toISOString();
-			}
-		}
-	};
+	function handleDateChange(date: Date | null) {
+		eventDate = date;
+	}
 
-	// Format date for datetime-local input
-	const toLocalInputValue = (d: Date) => {
-		const pad = (n: number) => String(n).padStart(2, '0');
-		const date = new Date(d);
-		return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-	};
-
-	let localDate = $derived(event ? toLocalInputValue(new Date(event.date)) : '');
-	let localDeadline = $derived(event ? toLocalInputValue(new Date(event.deadline)) : '');
-	let defaultCostCompany = $derived(event ? (event.costCompany / 100).toFixed(2) : '15.00');
-	let defaultCostPlusOne = $derived(event ? (event.costPlusOne / 100).toFixed(2) : '20.00');
-	let defaultDuration = $derived(event?.duration ?? 120);
+	function handleDeadlineChange(date: Date | null) {
+		eventDeadline = date;
+	}
 </script>
 
 <form
@@ -86,205 +99,136 @@
 	</h2>
 
 	{#if timezone}
-		<p class="text-xs text-gray-500">
+		<p class="text-muted-foreground text-xs">
 			Dates in your timezone: <span class="font-semibold text-indigo-400">{timezone}</span>
 		</p>
 	{/if}
 
-	<input type="hidden" name="date" value={utcDate || (event ? event.date.toISOString() : '')} />
-	<input
-		type="hidden"
-		name="deadline"
-		value={utcDeadline || (event ? event.deadline.toISOString() : '')}
-	/>
+	<input type="hidden" name="date" value={eventDate?.toISOString() ?? ''} />
+	<input type="hidden" name="deadline" value={eventDeadline?.toISOString() ?? ''} />
 	<input type="hidden" name="isPrivate" value={String(isPrivate)} />
 
-	<div>
-		<label for="title" class="mb-1.5 block text-sm font-medium text-gray-300">Event Title</label>
-		<input
+	<Field>
+		<Label for="title">Event Title</Label>
+		<Input
 			type="text"
 			id="title"
 			name="title"
 			required
-			value={event?.title ?? ''}
-			class="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-white transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+			bind:value={title}
 			placeholder="e.g. Saturday Morning Badminton"
 		/>
-	</div>
+	</Field>
 
 	<div class="grid grid-cols-2 gap-4">
-		<div>
-			<label for="date_local" class="mb-1.5 block text-sm font-medium text-gray-300"
-				>Date & Time</label
-			>
-			<input
-				type="datetime-local"
-				id="date_local"
-				name="date_local"
-				required
-				value={localDate}
-				oninput={handleSync}
-				class="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-white transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
-			/>
-		</div>
-		<div>
-			<label for="duration" class="mb-1.5 block text-sm font-medium text-gray-300"
-				>Duration (minutes)</label
-			>
-			<input
-				type="number"
-				id="duration"
-				name="duration"
-				required
-				min="30"
-				step="15"
-				value={defaultDuration}
-				class="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-white transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
-			/>
-		</div>
+		<Field>
+			<Label>Date & Time</Label>
+			<DateTimePicker value={eventDate} onchange={handleDateChange} />
+		</Field>
+		<Field>
+			<Label for="duration">Duration (minutes)</Label>
+			<Input type="number" id="duration" name="duration" required step="15" bind:value={duration} />
+		</Field>
 	</div>
 
-	<div>
-		<label for="location" class="mb-1.5 block text-sm font-medium text-gray-300">Location</label>
-		<input
+	<Field>
+		<Label for="location">Location</Label>
+		<Input
 			type="text"
 			id="location"
 			name="location"
 			required
-			value={event?.location ?? ''}
-			class="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-white transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+			bind:value={location}
 			placeholder="e.g. Sports Hall A"
 		/>
-	</div>
+	</Field>
 
-	<div>
-		<label for="description" class="mb-1.5 block text-sm font-medium text-gray-300"
-			>Description</label
-		>
-		<textarea
+	<Field>
+		<Label for="description">Description</Label>
+		<Textarea
 			id="description"
 			name="description"
 			required
-			rows="3"
-			class="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-white transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
-			placeholder="Provide extra details...">{event?.description ?? ''}</textarea
-		>
-	</div>
+			bind:value={description}
+			placeholder="Provide extra details..."
+		></Textarea>
+	</Field>
+
+	<Field>
+		<Label for="capacity">Player Capacity</Label>
+		<Input type="number" id="capacity" name="capacity" required bind:value={capacity} />
+	</Field>
 
 	<div class="grid grid-cols-2 gap-4">
-		<div>
-			<label for="capacity" class="mb-1.5 block text-sm font-medium text-gray-300"
-				>Player Capacity</label
-			>
-			<input
-				type="number"
-				id="capacity"
-				name="capacity"
-				required
-				min="2"
-				value={event?.capacity ?? 10}
-				class="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-white transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
-			/>
-		</div>
-	</div>
-
-	<div class="grid grid-cols-2 gap-4">
-		<div>
-			<label for="costCompany" class="mb-1.5 block text-sm font-medium text-gray-300">
-				<span class="inline-flex items-center gap-1">
-					<span>Company Cost</span>
-					<span class="rounded bg-blue-500/20 px-1.5 py-0.5 text-xs text-blue-400">Blue</span>
+		<Field>
+			<Label for="costCompany">
+				<span class="inline-flex items-center gap-2">
+					Company Cost
+					<Badge variant="company">Company</Badge>
 				</span>
-			</label>
-			<div class="relative">
-				<span class="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-gray-500"
-					>$</span
-				>
-				<input
+			</Label>
+			<div class="flex items-center gap-1">
+				<span class="text-muted-foreground">$</span>
+				<Input
 					type="number"
 					id="costCompany"
 					name="costCompany"
 					required
-					min="0"
 					step="0.5"
-					value={defaultCostCompany}
-					class="w-full rounded-xl border border-gray-700 bg-gray-900 py-3 pr-4 pl-8 text-white transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+					bind:value={costCompany}
+					class="flex-1"
 				/>
 			</div>
-		</div>
-		<div>
-			<label for="costPlusOne" class="mb-1.5 block text-sm font-medium text-gray-300">
-				<span class="inline-flex items-center gap-1">
-					<span>PlusOne Cost</span>
-					<span class="rounded bg-emerald-500/20 px-1.5 py-0.5 text-xs text-emerald-400">Green</span
-					>
+		</Field>
+		<Field>
+			<Label for="costPlusOne">
+				<span class="inline-flex items-center gap-2">
+					PlusOne Cost
+					<Badge variant="plusone">PlusOne</Badge>
 				</span>
-			</label>
-			<div class="relative">
-				<span class="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-gray-500"
-					>$</span
-				>
-				<input
+			</Label>
+			<div class="flex items-center gap-1">
+				<span class="text-muted-foreground">$</span>
+				<Input
 					type="number"
 					id="costPlusOne"
 					name="costPlusOne"
 					required
-					min="0"
 					step="0.5"
-					value={defaultCostPlusOne}
-					class="w-full rounded-xl border border-gray-700 bg-gray-900 py-3 pr-4 pl-8 text-white transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+					bind:value={costPlusOne}
+					class="flex-1"
 				/>
 			</div>
-		</div>
+		</Field>
 	</div>
 
-	<div>
-		<label for="deadline_local" class="mb-1.5 block text-sm font-medium text-gray-300"
-			>Withdrawal Deadline</label
-		>
-		<input
-			type="datetime-local"
-			id="deadline_local"
-			name="deadline_local"
-			required
-			value={localDeadline}
-			oninput={handleSync}
-			class="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-white transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
-		/>
-	</div>
+	<Field>
+		<Label>Withdrawal Deadline</Label>
+		<DateTimePicker value={eventDeadline} onchange={handleDeadlineChange} />
+	</Field>
 
 	<!-- Privacy toggle -->
-	<label class="flex cursor-pointer items-center gap-3">
-		<div class="relative">
-			<input type="checkbox" class="sr-only" bind:checked={isPrivate} />
-			<div
-				class="h-6 w-11 rounded-full transition-colors duration-200 {isPrivate
-					? 'bg-indigo-600'
-					: 'bg-gray-700'}"
-			></div>
-			<div
-				class="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 {isPrivate
-					? 'translate-x-5'
-					: 'translate-x-0'}"
-			></div>
+	<Field>
+		<div class="flex items-center gap-3">
+			<Switch bind:checked={isPrivate} />
+			<Label class="cursor-pointer">
+				Private event <span class="text-muted-foreground"
+					>(hide attendee names from non-admins)</span
+				>
+			</Label>
 		</div>
-		<span class="text-sm font-medium text-gray-300">
-			Private event <span class="text-gray-500">(hide attendee names from non-admins)</span>
-		</span>
-	</label>
+	</Field>
 
 	{#if form?.error}
-		<p class="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+		<p
+			class="border-destructive/30 bg-destructive/10 text-destructive rounded-xl border px-4 py-3 text-sm"
+		>
 			{form.error}
 		</p>
 	{/if}
 
 	<div class="flex gap-3 pt-2">
-		<button
-			type="submit"
-			disabled={saving}
-			class="flex-1 rounded-xl bg-indigo-600 px-4 py-2.5 font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-50"
-		>
+		<Button type="submit" disabled={saving} class="flex-1">
 			{saving
 				? mode === 'create'
 					? 'Creating...'
@@ -292,15 +236,9 @@
 				: mode === 'create'
 					? 'Create Event'
 					: 'Save Changes'}
-		</button>
+		</Button>
 		{#if mode === 'edit'}
-			<button
-				type="button"
-				onclick={onCancel}
-				class="rounded-xl border border-gray-700 px-4 py-2.5 text-sm font-medium text-gray-300 transition hover:bg-gray-800"
-			>
-				Cancel
-			</button>
+			<Button type="button" variant="outline" onclick={onCancel}>Cancel</Button>
 		{/if}
 	</div>
 </form>

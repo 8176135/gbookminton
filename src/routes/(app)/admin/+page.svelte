@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageProps } from './$types';
 	import LocalDate from '$lib/components/LocalDate.svelte';
+	import { Button } from '$lib/components/ui/button/index.js';
 
 	let { data }: PageProps = $props();
 	let events = $derived(data.events);
@@ -31,30 +32,12 @@
 				<p class="text-sm text-gray-400">Manage events, bookings, and users.</p>
 			</div>
 			<div class="flex flex-wrap gap-3">
-				<a
-					href="/admin/settings"
-					class="rounded-xl border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-700"
-				>
-					Settings
-				</a>
-				<a
-					href="/admin/users"
-					class="rounded-xl border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-700"
-				>
-					Manage Users
-				</a>
-				<a
-					href="/admin?showPast={showPast ? 'false' : 'true'}"
-					class="rounded-xl border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-700"
-				>
+				<Button href="/admin/settings" variant="outline">Settings</Button>
+				<Button href="/admin/users" variant="outline">Manage Users</Button>
+				<Button href="/admin?showPast={showPast ? 'false' : 'true'}" variant="outline">
 					{showPast ? 'Hide Past Events' : 'Show Past Events'}
-				</a>
-				<a
-					href="/admin/events/new"
-					class="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
-				>
-					Create New Event
-				</a>
+				</Button>
+				<Button href="/admin/events/new">Create New Event</Button>
 			</div>
 		</header>
 
@@ -70,7 +53,7 @@
 							<th class="px-6 py-4 font-medium">Date & Time</th>
 							<th class="px-6 py-4 font-medium">Location</th>
 							<th class="px-6 py-4 font-medium">Enrolled / Waitlist</th>
-							<th class="px-6 py-4 font-medium">Pricing (Company / PlusOne)</th>
+							<th class="px-6 py-4 font-medium">Pricing / Deadline</th>
 							<th class="px-6 py-4 text-right font-medium">Actions</th>
 						</tr>
 					</thead>
@@ -79,10 +62,10 @@
 							{@const counts = countMap[ev.id] || { enrolled: 0, waitlisted: 0 }}
 							<tr class="transition hover:bg-gray-800/30">
 								<td class="px-6 py-4 font-medium text-white">{ev.title}</td>
-								<td class="px-6 py-4"
-									><LocalDate date={ev.date} />
-									<span class="text-xs text-gray-500">({ev.duration} min)</span></td
-								>
+								<td class="px-6 py-4">
+									<LocalDate date={ev.date} />
+									<span class="text-xs text-gray-500">({ev.duration} min)</span>
+								</td>
 								<td class="px-6 py-4">{ev.location}</td>
 								<td class="px-6 py-4">
 									<span class="font-medium">{counts.enrolled}</span> / {ev.capacity}
@@ -92,27 +75,27 @@
 								</td>
 								<td class="px-6 py-4">
 									<div class="flex flex-col gap-0.5">
-										<span class="text-blue-400"
-											>${(ev.costCompany / 100).toFixed(2)}
-											<span class="text-xs text-gray-500">Company</span></span
-										>
-										<span class="text-emerald-400"
-											>${(ev.costPlusOne / 100).toFixed(2)}
-											<span class="text-xs text-gray-500">PlusOne</span></span
-										>
+										<span class="text-blue-400">
+											${(ev.costCompany / 100).toFixed(2)}
+											<span class="text-xs text-gray-500">Company</span>
+										</span>
+										<span class="text-emerald-400">
+											${(ev.costPlusOne / 100).toFixed(2)}
+											<span class="text-xs text-gray-500">PlusOne</span>
+										</span>
 									</div>
 									<div class="mt-1 text-xs text-red-400"><LocalDate date={ev.deadline} /></div>
 								</td>
 								<td class="px-6 py-4 text-right">
-									<a href="/events/{ev.id}" class="text-indigo-400 hover:text-indigo-300">Manage</a>
+									<Button href="/events/{ev.id}" variant="ghost" size="sm">Manage</Button>
 								</td>
 							</tr>
 						{/each}
 						{#if events.length === 0}
 							<tr>
-								<td colspan="6" class="px-6 py-8 text-center text-gray-500"
-									>No upcoming events found. Create one.</td
-								>
+								<td colspan="6" class="px-6 py-8 text-center text-gray-500">
+									No upcoming events found. Create one.
+								</td>
 							</tr>
 						{/if}
 					</tbody>
@@ -145,10 +128,10 @@
 									{@const counts = countMap[ev.id] || { enrolled: 0, waitlisted: 0 }}
 									<tr class="transition hover:bg-gray-800/30">
 										<td class="px-6 py-4 font-medium text-white">{ev.title}</td>
-										<td class="px-6 py-4"
-											><LocalDate date={ev.date} />
-											<span class="text-xs text-gray-500">({ev.duration} min)</span></td
-										>
+										<td class="px-6 py-4">
+											<LocalDate date={ev.date} />
+											<span class="text-xs text-gray-500">({ev.duration} min)</span>
+										</td>
 										<td class="px-6 py-4">{ev.location}</td>
 										<td class="px-6 py-4">
 											<span class="font-medium">{counts.enrolled}</span> / {ev.capacity}
@@ -158,21 +141,19 @@
 										</td>
 										<td class="px-6 py-4">
 											<div class="flex flex-col gap-0.5">
-												<span class="text-blue-400"
-													>${(ev.costCompany / 100).toFixed(2)}
-													<span class="text-xs text-gray-500">Co</span></span
-												>
-												<span class="text-emerald-400"
-													>${(ev.costPlusOne / 100).toFixed(2)}
-													<span class="text-xs text-gray-500">P1</span></span
-												>
+												<span class="text-blue-400">
+													${(ev.costCompany / 100).toFixed(2)}
+													<span class="text-xs text-gray-500">Co</span>
+												</span>
+												<span class="text-emerald-400">
+													${(ev.costPlusOne / 100).toFixed(2)}
+													<span class="text-xs text-gray-500">P1</span>
+												</span>
 											</div>
 											<div class="mt-1 text-xs text-red-400"><LocalDate date={ev.deadline} /></div>
 										</td>
 										<td class="px-6 py-4 text-right">
-											<a href="/events/{ev.id}" class="text-indigo-400 hover:text-indigo-300"
-												>Manage</a
-											>
+											<Button href="/events/{ev.id}" variant="ghost" size="sm">Manage</Button>
 										</td>
 									</tr>
 								{/each}
@@ -207,10 +188,10 @@
 									{@const counts = countMap[ev.id] || { enrolled: 0, waitlisted: 0 }}
 									<tr class="opacity-75 transition hover:bg-gray-800/20">
 										<td class="px-6 py-4 font-medium text-gray-300">{ev.title}</td>
-										<td class="px-6 py-4 text-gray-500"
-											><LocalDate date={ev.date} />
-											<span class="text-xs text-gray-600">({ev.duration} min)</span></td
-										>
+										<td class="px-6 py-4 text-gray-500">
+											<LocalDate date={ev.date} />
+											<span class="text-xs text-gray-600">({ev.duration} min)</span>
+										</td>
 										<td class="px-6 py-4 text-gray-500">{ev.location}</td>
 										<td class="px-6 py-4 text-gray-500">
 											{counts.enrolled} / {ev.capacity}
@@ -220,20 +201,18 @@
 										</td>
 										<td class="px-6 py-4 text-gray-500">
 											<div class="flex flex-col gap-0.5">
-												<span class="text-blue-400"
-													>${(ev.costCompany / 100).toFixed(2)}
-													<span class="text-xs text-gray-600">Co</span></span
-												>
-												<span class="text-emerald-400"
-													>${(ev.costPlusOne / 100).toFixed(2)}
-													<span class="text-xs text-gray-600">P1</span></span
-												>
+												<span class="text-blue-400">
+													${(ev.costCompany / 100).toFixed(2)}
+													<span class="text-xs text-gray-600">Co</span>
+												</span>
+												<span class="text-emerald-400">
+													${(ev.costPlusOne / 100).toFixed(2)}
+													<span class="text-xs text-gray-600">P1</span>
+												</span>
 											</div>
 										</td>
 										<td class="px-6 py-4 text-right">
-											<a href="/events/{ev.id}" class="text-indigo-400/70 hover:text-indigo-300"
-												>View</a
-											>
+											<Button href="/events/{ev.id}" variant="ghost" size="sm">View</Button>
 										</td>
 									</tr>
 								{/each}

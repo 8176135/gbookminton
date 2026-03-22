@@ -2,6 +2,8 @@
 	import type { PageProps } from './$types';
 	import LocalDate from '$lib/components/LocalDate.svelte';
 	import EventForm from '$lib/components/EventForm.svelte';
+	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
 
 	let { data, form }: PageProps = $props();
 	let ev = $derived(data.event);
@@ -23,8 +25,41 @@
 	);
 	let withdrawn = $derived(signups ? signups.filter((s) => s.signup.status === 'withdrawn') : []);
 
-	// Edit mode
 	let editing = $state(false);
+
+	function getStatusVariant(status: string) {
+		switch (status) {
+			case 'listed':
+				return 'outline';
+			case 'waitlist':
+				return 'outline';
+			case 'locked':
+				return 'secondary';
+			case 'withdrawn':
+				return 'outline';
+			case 'removed':
+				return 'destructive';
+			default:
+				return 'outline';
+		}
+	}
+
+	function getStatusClass(status: string) {
+		switch (status) {
+			case 'listed':
+				return 'border-emerald-500/30 text-emerald-400';
+			case 'waitlist':
+				return 'border-yellow-500/30 text-yellow-400';
+			case 'locked':
+				return '';
+			case 'withdrawn':
+				return 'border-gray-500/30 text-gray-400';
+			case 'removed':
+				return '';
+			default:
+				return '';
+		}
+	}
 </script>
 
 <svelte:head>
@@ -67,47 +102,40 @@
 				<div class="flex flex-wrap items-start justify-between gap-4">
 					<div>
 						<h1 class="mb-1 text-3xl font-bold tracking-tight text-white">{ev.title}</h1>
-						<p class="text-gray-400">
+						<p class="text-muted-foreground">
 							<LocalDate date={ev.date} /> • {ev.location} • {ev.duration} mins
 						</p>
 						<!-- Pricing -->
 						<div class="mt-2 flex flex-wrap items-center gap-4 text-sm">
 							<div class="flex items-center gap-2">
-								<span class="text-gray-500">Company:</span>
+								<span class="text-muted-foreground">Company:</span>
 								<span class="font-medium text-blue-400">${(ev.costCompany / 100).toFixed(2)}</span>
 							</div>
 							<div class="flex items-center gap-2">
-								<span class="text-gray-500">PlusOne:</span>
+								<span class="text-muted-foreground">PlusOne:</span>
 								<span class="font-medium text-emerald-400"
 									>${(ev.costPlusOne / 100).toFixed(2)}</span
 								>
 							</div>
 						</div>
 						{#if ev.isPrivate && isAdmin}
-							<span
-								class="mt-2 inline-flex rounded-full border border-yellow-500/30 bg-yellow-500/10 px-2.5 py-0.5 text-xs font-semibold text-yellow-400"
-							>
-								🔒 Private
-							</span>
+							<div class="mt-2">
+								<Badge variant="outline" class="border-yellow-500/30 text-yellow-400"
+									>🔒 Private</Badge
+								>
+							</div>
 						{/if}
 						{#if ev.isLocked}
-							<span
-								class="mt-2 inline-flex rounded-full border border-red-500/30 bg-red-500/10 px-2.5 py-0.5 text-xs font-semibold text-red-400"
-							>
-								Locked
-							</span>
+							<div class="mt-2">
+								<Badge variant="destructive">Locked</Badge>
+							</div>
 						{/if}
 						{#if ev.description}
-							<p class="mt-3 max-w-2xl text-sm text-gray-400">{ev.description}</p>
+							<p class="text-muted-foreground mt-3 max-w-2xl text-sm">{ev.description}</p>
 						{/if}
 					</div>
 					{#if isAdmin}
-						<button
-							onclick={() => (editing = true)}
-							class="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
-						>
-							Edit Event
-						</button>
+						<Button onclick={() => (editing = true)}>Edit Event</Button>
 					{/if}
 				</div>
 			{/if}
@@ -115,7 +143,7 @@
 
 		<!-- Deadline info bar -->
 		<div
-			class="mb-8 rounded-xl border border-gray-800 bg-gray-900/40 px-5 py-3 text-sm text-gray-400"
+			class="text-muted-foreground mb-8 rounded-xl border border-gray-800 bg-gray-900/40 px-5 py-3 text-sm"
 		>
 			<span class="font-medium text-gray-300">Withdrawal deadline:</span>
 			<LocalDate date={ev.deadline} />
@@ -135,7 +163,7 @@
 						<!-- Private event: only show count to non-admins -->
 						<div class="flex flex-col items-center justify-center gap-1 p-8 text-center">
 							<p class="text-3xl font-bold text-white">{data.listedCount}</p>
-							<p class="text-sm text-gray-500">players registered</p>
+							<p class="text-muted-foreground text-sm">players registered</p>
 							<p class="mt-2 text-xs text-gray-600">Attendee list is private for this event.</p>
 						</div>
 					{:else}
@@ -145,13 +173,13 @@
 									<div>
 										<p class="font-medium text-white">{player.user.name}</p>
 										{#if isAdmin}
-											<p class="text-sm text-gray-400">{player.user.email}</p>
+											<p class="text-muted-foreground text-sm">{player.user.email}</p>
 										{/if}
 									</div>
 								</li>
 							{/each}
 							{#if listed.length === 0}
-								<li class="p-6 text-center text-gray-500">No players registered yet.</li>
+								<li class="text-muted-foreground p-6 text-center">No players registered yet.</li>
 							{/if}
 						</ul>
 					{/if}
@@ -170,7 +198,7 @@
 						{#if !isAdmin && ev.isPrivate}
 							<div class="flex flex-col items-center justify-center gap-1 p-8 text-center">
 								<p class="text-3xl font-bold text-white">{data.waitlistCount}</p>
-								<p class="text-sm text-gray-500">on waitlist</p>
+								<p class="text-muted-foreground text-sm">on waitlist</p>
 							</div>
 						{:else}
 							<ul class="divide-y divide-gray-800">
@@ -184,14 +212,14 @@
 											<div>
 												<p class="font-medium text-white">{player.user.name}</p>
 												{#if isAdmin}
-													<p class="text-sm text-gray-400">{player.user.email}</p>
+													<p class="text-muted-foreground text-sm">{player.user.email}</p>
 												{/if}
 											</div>
 										</div>
 									</li>
 								{/each}
 								{#if waitlist.length === 0}
-									<li class="p-6 text-center text-gray-500">Waitlist is empty.</li>
+									<li class="text-muted-foreground p-6 text-center">Waitlist is empty.</li>
 								{/if}
 							</ul>
 						{/if}
@@ -212,7 +240,7 @@
 									</li>
 								{/each}
 								{#if withdrawn.length === 0}
-									<li class="p-6 text-center text-gray-500">No withdrawals.</li>
+									<li class="text-muted-foreground p-6 text-center">No withdrawals.</li>
 								{/if}
 							</ul>
 						</div>
@@ -225,24 +253,14 @@
 		{#if !isAdmin && userSignupStatus}
 			<div class="mt-8">
 				<div class="rounded-2xl border border-gray-800 bg-gray-900/50 p-5">
-					<p class="text-sm text-gray-400">
+					<p class="text-muted-foreground text-sm">
 						<span class="font-medium text-white">Your status:</span>
-						<span
-							class="ml-2 rounded-full px-2.5 py-1 text-xs font-semibold {userSignupStatus ===
-							'listed'
-								? 'border border-emerald-500/20 bg-emerald-500/20 text-emerald-300'
-								: ''} {userSignupStatus === 'waitlist'
-								? 'border border-yellow-500/20 bg-yellow-500/20 text-yellow-300'
-								: ''} {userSignupStatus === 'locked'
-								? 'border border-indigo-500/20 bg-indigo-500/20 text-indigo-300'
-								: ''} {userSignupStatus === 'withdrawn'
-								? 'border border-gray-500/20 bg-gray-500/20 text-gray-400'
-								: ''} {userSignupStatus === 'removed'
-								? 'border border-red-500/20 bg-red-500/20 text-red-300'
-								: ''}"
+						<Badge
+							variant={getStatusVariant(userSignupStatus)}
+							class="ml-2 {getStatusClass(userSignupStatus)}"
 						>
 							{userSignupStatus}
-						</span>
+						</Badge>
 					</p>
 				</div>
 			</div>

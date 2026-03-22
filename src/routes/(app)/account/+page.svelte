@@ -6,14 +6,24 @@
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
-	let pastEvents = $derived(data.pastEvents);
 	let user = $derived(data.user);
-	let name = $state(data.user?.name || '');
+	let pastEvents = $derived(data.pastEvents);
 
+	// Form state - intentionally initialized once with user data
+	// These are controlled inputs for the form, not reactive displays
+	let name = $state('');
 	let currentPassword = $state('');
 	let newPassword = $state('');
 	let confirmPassword = $state('');
-	let email = $state(data.user?.email || '');
+	let email = $state('');
+
+	// Sync form state when user data loads
+	$effect(() => {
+		if (data.user) {
+			name = data.user.name ?? '';
+			email = data.user.email ?? '';
+		}
+	});
 
 	let nameLoading = $state(false);
 	let nameError = $state('');
@@ -240,7 +250,7 @@
 			<div class="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-2xl">
 				<h2 class="font-outfit mb-4 text-xl font-semibold text-white">Your Code</h2>
 				<p class="mb-4 text-sm text-gray-400">
-					Share this code with friends for easy sign-up referencing.
+					Put this code in the reference of your bank payment.
 				</p>
 				<div class="rounded-2xl border border-white/10 bg-black/20 px-6 py-4 text-center">
 					<span class="font-mono text-3xl font-bold tracking-widest text-indigo-400">

@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { PageProps } from './$types';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
 
 	let { data, form }: PageProps = $props();
 	let domains = $derived(data.domains);
@@ -9,7 +11,6 @@
 	let saving = $state(false);
 	let removingId = $state<string | null>(null);
 
-	// Helper to safely get domain error from form action result
 	function getDomainError(f: typeof form): string | undefined {
 		if (f && 'domainError' in f) {
 			return f.domainError as string;
@@ -37,14 +38,14 @@
 			</div>
 			<div>
 				<h1 class="text-3xl font-bold tracking-tight text-white">Settings</h1>
-				<p class="text-sm text-gray-400">Configure system settings.</p>
+				<p class="text-muted-foreground text-sm">Configure system settings.</p>
 			</div>
 		</header>
 
 		<!-- Company Email Domains Section -->
 		<section class="mb-8">
 			<h2 class="mb-4 text-xl font-bold text-gray-200">Company Email Domains</h2>
-			<p class="mb-4 text-sm text-gray-400">
+			<p class="text-muted-foreground mb-4 text-sm">
 				Users with email addresses from these domains will automatically be classified as
 				<strong class="text-blue-400">Company</strong> type. All other users are
 				<strong class="text-emerald-400">PlusOne</strong> type.
@@ -52,7 +53,7 @@
 
 			{#if form?.error && !domainError}
 				<div
-					class="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400"
+					class="border-destructive/30 bg-destructive/10 text-destructive mb-4 rounded-xl border px-4 py-3 text-sm"
 				>
 					{form.error}
 				</div>
@@ -90,7 +91,7 @@
 										<button
 											type="submit"
 											disabled={removingId === d.id}
-											class="text-red-400 hover:text-red-300 disabled:opacity-50"
+											class="text-destructive hover:text-destructive/80 disabled:opacity-50"
 										>
 											{removingId === d.id ? 'Removing...' : 'Remove'}
 										</button>
@@ -100,9 +101,9 @@
 						{/each}
 						{#if domains.length === 0}
 							<tr>
-								<td colspan="3" class="px-6 py-8 text-center text-gray-500"
-									>No domains configured. Add a domain below.</td
-								>
+								<td colspan="3" class="px-6 py-8 text-center text-gray-500">
+									No domains configured. Add a domain below.
+								</td>
 							</tr>
 						{/if}
 					</tbody>
@@ -125,27 +126,21 @@
 					}}
 				>
 					<div class="flex gap-3">
-						<div class="flex-1">
-							<input
+						<div class="flex-1 space-y-1">
+							<Input
 								type="text"
 								name="domain"
 								bind:value={newDomain}
 								placeholder="example.com"
-								class="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-2.5 text-white transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none {domainError
-									? 'border-red-500'
-									: ''}"
+								class={domainError ? 'border-destructive' : ''}
 							/>
 							{#if domainError}
-								<p class="mt-1 text-xs text-red-400">{domainError}</p>
+								<p class="text-destructive text-xs">{domainError}</p>
 							{/if}
 						</div>
-						<button
-							type="submit"
-							disabled={saving || !newDomain.trim()}
-							class="rounded-xl bg-indigo-600 px-6 py-2.5 font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-50"
-						>
+						<Button type="submit" disabled={saving || !newDomain.trim()}>
 							{saving ? 'Adding...' : 'Add Domain'}
-						</button>
+						</Button>
 					</div>
 				</form>
 			</div>
