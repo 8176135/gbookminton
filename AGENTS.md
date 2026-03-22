@@ -45,7 +45,9 @@ src/
 │   │   ├── upbank.ts      # Up Bank API polling
 │   │   ├── deadline.ts    # Background deadline processor
 │   │   └── resend.ts      # Email client
-│   └── components/         # Reusable Svelte components
+│   ├── components/        # Reusable Svelte components
+│   │   └── EventForm.svelte # Shared event creation/editing form
+│   └── types.ts           # TypeScript type definitions and enums
 ├── routes/                # SvelteKit file-based routing
 │   ├── (app)/             # Route group: authenticated routes
 │   │   ├── dashboard/     # User dashboard
@@ -83,8 +85,34 @@ All database tables defined here via Drizzle:
 - `user` — Custom fields: `role`, `balance`, `shortCode`
 - `session`, `account`, `verification` — BetterAuth tables
 - `event` — Tournament/event definitions
-- `eventSignup` — User-to-event mapping with status
-- `transaction` — Balance change ledger
+- `eventSignup` — User-to-event mapping with status (enum values: listed/waitlist/locked/withdrawn/removed)
+- `transaction` — Balance change ledger (enum values: deposit/deduction)
+
+### Shared Types (`src/lib/types.ts`)
+
+TypeScript enums for type-safe string values:
+
+```typescript
+export enum EventSignupStatus {
+	Listed = 'listed',
+	Waitlist = 'waitlist',
+	Locked = 'locked',
+	Withdrawn = 'withdrawn',
+	Removed = 'removed'
+}
+
+export enum TransactionType {
+	Deposit = 'deposit',
+	Deduction = 'deduction'
+}
+
+export enum UserRole {
+	User = 'user',
+	Admin = 'admin'
+}
+```
+
+Note: Database columns use `text` type (SQLite limitation). TypeScript enums provide type safety at the application level.
 
 ### Auth (`src/lib/server/auth.ts`)
 
@@ -100,6 +128,12 @@ Two `setInterval`-based background services initialized at startup:
 
 1. **Up Bank Polling** (`src/lib/server/upbank.ts`) — Checks for deposits, matches shortcodes
 2. **Deadline Processor** (`src/lib/server/deadline.ts`) — Processes event deadlines, deducts balances
+
+### Shared Components (`src/lib/components/`)
+
+- **EventForm.svelte**: Shared component for event creation and editing. Used by:
+  - `/admin/events/new` - Create event page
+  - `/events/[id]` - Edit event (admin only)
 
 ### API Integrations
 
@@ -205,17 +239,19 @@ export const actions = {
 
 ## Important Files
 
-| File                          | Purpose                                       |
-| ----------------------------- | --------------------------------------------- |
-| `src/lib/server/db/schema.ts` | **Single source of truth** for all DB tables  |
-| `src/lib/server/auth.ts`      | Auth configuration, session handling          |
-| `src/lib/server/upbank.ts`    | Up Bank API integration                       |
-| `src/lib/server/deadline.ts`  | Background deadline processing                |
-| `src/hooks.server.ts`         | Initializes background services               |
-| `src/app.d.ts`                | TypeScript types for `App.Locals`, `PageData` |
-| `svelte.config.js`            | SvelteKit adapter configuration               |
-| `vite.config.ts`              | Vite + Tailwind plugin config                 |
-| `drizzle.config.ts`           | Drizzle ORM configuration                     |
+| File                                 | Purpose                                       |
+| ------------------------------------- | --------------------------------------------- |
+| `src/lib/server/db/schema.ts`        | **Single source of truth** for all DB tables  |
+| `src/lib/server/auth.ts`             | Auth configuration, session handling          |
+| `src/lib/server/upbank.ts`           | Up Bank API integration                       |
+| `src/lib/server/deadline.ts`         | Background deadline processing                |
+| `src/hooks.server.ts`                | Initializes background services               |
+| `src/lib/components/EventForm.svelte` | Shared event form (create/edit)             |
+| `src/lib/types.ts`                   | TypeScript enums for status/type/role        |
+| `src/app.d.ts`                       | TypeScript types for `App.Locals`, `PageData` |
+| `svelte.config.js`                   | SvelteKit adapter configuration               |
+| `vite.config.ts`                     | Vite + Tailwind plugin config                 |
+| `drizzle.config.ts`                  | Drizzle ORM configuration                     |
 
 ### Entry Points
 

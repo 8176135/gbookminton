@@ -12,7 +12,7 @@ export const user = sqliteTable('user', {
 	// App customized fields
 	balance: integer('balance').notNull().default(0), // in cents
 	shortCode: text('shortCode').notNull().unique(),
-	role: text('role').notNull().default('user')
+	role: text('role').notNull().default('user') // enum values: user, admin
 });
 
 export const session = sqliteTable('session', {
@@ -79,7 +79,7 @@ export const eventSignup = sqliteTable('eventSignup', {
 	eventId: text('eventId')
 		.notNull()
 		.references(() => event.id),
-	status: text('status').notNull(), // 'listed', 'waitlist', 'locked', 'withdrawn', 'removed'
+	status: text('status').notNull(), // enum values: listed, waitlist, locked, withdrawn, removed
 	createdAt: integer('createdAt', { mode: 'timestamp' }).notNull()
 });
 
@@ -90,6 +90,6 @@ export const transaction = sqliteTable('transaction', {
 		.references(() => user.id),
 	amount: integer('amount').notNull(), // positive for deposit, positive for deduction
 	reference: text('reference').notNull(), // up bank reference or event id
-	type: text('type').notNull(), // 'deposit' or 'deduction'
+	type: text('type').notNull(), // enum values: deposit, deduction
 	date: integer('date', { mode: 'timestamp' }).notNull()
 });
