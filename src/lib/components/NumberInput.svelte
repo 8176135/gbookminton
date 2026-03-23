@@ -1,6 +1,7 @@
 <script lang="ts">
 	import * as InputGroup from '$lib/components/ui/input-group/index.js';
 	import { Minus, Plus } from 'lucide-svelte';
+	import type { Snippet } from 'svelte';
 
 	interface Props {
 		value?: number | string;
@@ -11,6 +12,7 @@
 		id?: string;
 		name?: string;
 		class?: string;
+		prefix?: Snippet;
 	}
 
 	let {
@@ -21,7 +23,8 @@
 		required = false,
 		id,
 		name,
-		class: className = ''
+		class: className = '',
+		prefix
 	}: Props = $props();
 
 	function decrease() {
@@ -38,7 +41,18 @@
 </script>
 
 <InputGroup.Root class={className}>
-	<InputGroup.Input type="number" {id} {name} {required} {step} {min} {max} bind:value />
+	{@render prefix?.()}
+	<InputGroup.Input
+		type="number"
+		{id}
+		{name}
+		{required}
+		{step}
+		{min}
+		{max}
+		bind:value
+		class="[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+	/>
 	<InputGroup.Button type="button" variant="ghost" onclick={decrease}>
 		<Minus class="h-4 w-4" />
 	</InputGroup.Button>

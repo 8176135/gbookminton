@@ -162,8 +162,8 @@
 		/>
 	</Field>
 
-	<div class="grid grid-cols-2 gap-4">
-		<Field>
+	<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+		<Field class="md:col-span-2">
 			<Label>Date & Time</Label>
 			<div class="flex items-center gap-2">
 				<Popover.Root>
@@ -227,17 +227,11 @@
 					<Badge variant="company">Company</Badge> Cost
 				</span>
 			</Label>
-			<InputGroup.Root>
-				<InputGroup.Text class="text-muted-foreground">$</InputGroup.Text>
-				<InputGroup.Input
-					type="number"
-					id="costCompany"
-					name="costCompany"
-					required
-					step="0.5"
-					bind:value={costCompany}
-				/>
-			</InputGroup.Root>
+			<NumberInput id="costCompany" name="costCompany" required step={0.5} bind:value={costCompany}>
+				{#snippet prefix()}
+					<InputGroup.Text class="text-muted-foreground px-3">$</InputGroup.Text>
+				{/snippet}
+			</NumberInput>
 		</Field>
 		<Field>
 			<Label for="costPlusOne">
@@ -245,17 +239,11 @@
 					<Badge variant="plusone">PlusOne</Badge> Cost
 				</span>
 			</Label>
-			<InputGroup.Root>
-				<InputGroup.Text class="text-muted-foreground">$</InputGroup.Text>
-				<InputGroup.Input
-					type="number"
-					id="costPlusOne"
-					name="costPlusOne"
-					required
-					step="0.5"
-					bind:value={costPlusOne}
-				/>
-			</InputGroup.Root>
+			<NumberInput id="costPlusOne" name="costPlusOne" required step={0.5} bind:value={costPlusOne}>
+				{#snippet prefix()}
+					<InputGroup.Text class="text-muted-foreground px-3">$</InputGroup.Text>
+				{/snippet}
+			</NumberInput>
 		</Field>
 	</div>
 
