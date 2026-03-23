@@ -261,6 +261,8 @@ bun run prepare       # Runs svelte-kit sync
 
 ### shadcn-svelte Components
 
+Read: https://www.shadcn-svelte.com/llms.txt for full details.
+
 **Adding new components**:
 
 ```bash
