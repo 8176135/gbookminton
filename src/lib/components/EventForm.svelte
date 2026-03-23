@@ -118,7 +118,6 @@
 	});
 </script>
 
-a
 <form
 	method="POST"
 	{action}
@@ -225,8 +224,7 @@ a
 		<Field>
 			<Label for="costCompany">
 				<span class="inline-flex items-center gap-2">
-					Company Cost
-					<Badge variant="company">Company</Badge>
+					<Badge variant="company">Company</Badge> Cost
 				</span>
 			</Label>
 			<InputGroup.Root>
@@ -244,8 +242,7 @@ a
 		<Field>
 			<Label for="costPlusOne">
 				<span class="inline-flex items-center gap-2">
-					PlusOne Cost
-					<Badge variant="plusone">PlusOne</Badge>
+					<Badge variant="plusone">PlusOne</Badge> Cost
 				</span>
 			</Label>
 			<InputGroup.Root>
