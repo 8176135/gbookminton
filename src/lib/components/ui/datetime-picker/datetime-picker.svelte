@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Calendar as CalendarIcon, Clock, X, ChevronLeft, ChevronRight } from 'lucide-svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
 	import { cn } from '$lib/utils.js';
 	import { CalendarDate } from '@internationalized/date';
 
@@ -206,21 +207,21 @@
 				<div class="flex items-center gap-2">
 					<div class="flex items-center gap-1">
 						<Clock class="text-muted-foreground h-4 w-4" />
-						<input
+						<Input
 							type="number"
-							min="0"
-							max="23"
+							min={0}
+							max={23}
 							bind:value={hours}
-							class="border-input h-8 w-14 [appearance:textfield] rounded-lg border bg-transparent px-2 text-center text-sm text-white [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+							class="h-8 w-14 [appearance:textfield] text-center [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
 						/>
 						<span class="text-white">:</span>
-						<input
+						<Input
 							type="number"
-							min="0"
-							max="59"
-							step="5"
+							min={0}
+							max={59}
+							step={5}
 							bind:value={minutes}
-							class="border-input h-8 w-14 [appearance:textfield] rounded-lg border bg-transparent px-2 text-center text-sm text-white [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+							class="h-8 w-14 [appearance:textfield] text-center [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
 						/>
 					</div>
 					<button
