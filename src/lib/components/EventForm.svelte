@@ -8,7 +8,14 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Switch } from '$lib/components/ui/switch/index.js';
 	import { Field } from '$lib/components/ui/field/index.js';
-	import { DateTimePicker } from '$lib/components/ui/datetime-picker/index.js';
+	import { Calendar } from '$lib/components/ui/calendar/index.js';
+	import * as Popover from '$lib/components/ui/popover/index.js';
+	import * as InputGroup from '$lib/components/ui/input-group/index.js';
+	import NumberInput from './NumberInput.svelte';
+	import { Calendar as CalendarIcon } from 'lucide-svelte';
+	import { buttonVariants } from '$lib/components/ui/button/index.js';
+	import { cn } from '$lib/utils.js';
+	import { CalendarDate } from '@internationalized/date';
 
 	interface Props {
 		mode: 'create' | 'edit';
@@ -34,9 +41,46 @@
 
 	let saving = $state(false);
 	let timezone = $state('');
-	let eventDate = $state<Date | null>(null);
-	let eventDeadline = $state<Date | null>(null);
 	let isPrivate = $state(false);
+
+	let eventDateValue = $state<CalendarDate | undefined>();
+	let eventTimeValue = $state('09:00');
+
+	let eventDeadlineValue = $state<CalendarDate | undefined>();
+	let eventDeadlineTimeValue = $state('23:59');
+
+	let eventDate = $derived(
+		eventDateValue
+			? new Date(
+					eventDateValue.year,
+					eventDateValue.month - 1,
+					eventDateValue.day,
+					parseInt(eventTimeValue.split(':')[0] || '0'),
+					parseInt(eventTimeValue.split(':')[1] || '0')
+				)
+			: null
+	);
+
+	let eventDeadline = $derived(
+		eventDeadlineValue
+			? new Date(
+					eventDeadlineValue.year,
+					eventDeadlineValue.month - 1,
+					eventDeadlineValue.day,
+					parseInt(eventDeadlineTimeValue.split(':')[0] || '0'),
+					parseInt(eventDeadlineTimeValue.split(':')[1] || '0')
+				)
+			: null
+	);
+
+	function formatDate(date: CalendarDate | undefined) {
+		if (!date) return 'Select date';
+		return new Date(date.year, date.month - 1, date.day).toLocaleDateString('en-US', {
+			month: 'short',
+			day: 'numeric',
+			year: 'numeric'
+		});
+	}
 
 	let costCompany = $state('');
 	let costPlusOne = $state('');
@@ -49,8 +93,14 @@
 	onMount(() => {
 		timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 		if (event) {
-			eventDate = new Date(event.date);
-			eventDeadline = new Date(event.deadline);
+			const d = new Date(event.date);
+			eventDateValue = new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate());
+			eventTimeValue = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+
+			const dl = new Date(event.deadline);
+			eventDeadlineValue = new CalendarDate(dl.getFullYear(), dl.getMonth() + 1, dl.getDate());
+			eventDeadlineTimeValue = `${dl.getHours().toString().padStart(2, '0')}:${dl.getMinutes().toString().padStart(2, '0')}`;
+
 			isPrivate = event.isPrivate;
 			costCompany = (event.costCompany / 100).toFixed(2);
 			costPlusOne = (event.costPlusOne / 100).toFixed(2);
@@ -66,16 +116,9 @@
 			capacity = '10';
 		}
 	});
-
-	function handleDateChange(date: Date | null) {
-		eventDate = date;
-	}
-
-	function handleDeadlineChange(date: Date | null) {
-		eventDeadline = date;
-	}
 </script>
 
+a
 <form
 	method="POST"
 	{action}
@@ -123,11 +166,30 @@
 	<div class="grid grid-cols-2 gap-4">
 		<Field>
 			<Label>Date & Time</Label>
-			<DateTimePicker value={eventDate} onchange={handleDateChange} />
+			<div class="flex items-center gap-2">
+				<Popover.Root>
+					<Popover.Trigger
+						class={cn(
+							buttonVariants({
+								variant: 'outline',
+								className: 'bg-background w-[200px] justify-start text-left font-normal'
+							}),
+							!eventDateValue && 'text-muted-foreground'
+						)}
+					>
+						<CalendarIcon class="mr-2 h-4 w-4" />
+						{formatDate(eventDateValue)}
+					</Popover.Trigger>
+					<Popover.Content class="w-auto p-0" align="start">
+						<Calendar type="single" bind:value={eventDateValue} />
+					</Popover.Content>
+				</Popover.Root>
+				<Input type="time" bind:value={eventTimeValue} required class="w-auto flex-1" />
+			</div>
 		</Field>
 		<Field>
 			<Label for="duration">Duration (minutes)</Label>
-			<Input type="number" id="duration" name="duration" required step="15" bind:value={duration} />
+			<NumberInput id="duration" name="duration" required step={15} bind:value={duration} />
 		</Field>
 	</div>
 
@@ -156,7 +218,7 @@
 
 	<Field>
 		<Label for="capacity">Player Capacity</Label>
-		<Input type="number" id="capacity" name="capacity" required bind:value={capacity} />
+		<NumberInput id="capacity" name="capacity" required step={1} bind:value={capacity} />
 	</Field>
 
 	<div class="grid grid-cols-2 gap-4">
@@ -167,18 +229,17 @@
 					<Badge variant="company">Company</Badge>
 				</span>
 			</Label>
-			<div class="flex items-center gap-1">
-				<span class="text-muted-foreground">$</span>
-				<Input
+			<InputGroup.Root>
+				<InputGroup.Text class="text-muted-foreground">$</InputGroup.Text>
+				<InputGroup.Input
 					type="number"
 					id="costCompany"
 					name="costCompany"
 					required
 					step="0.5"
 					bind:value={costCompany}
-					class="flex-1"
 				/>
-			</div>
+			</InputGroup.Root>
 		</Field>
 		<Field>
 			<Label for="costPlusOne">
@@ -187,24 +248,42 @@
 					<Badge variant="plusone">PlusOne</Badge>
 				</span>
 			</Label>
-			<div class="flex items-center gap-1">
-				<span class="text-muted-foreground">$</span>
-				<Input
+			<InputGroup.Root>
+				<InputGroup.Text class="text-muted-foreground">$</InputGroup.Text>
+				<InputGroup.Input
 					type="number"
 					id="costPlusOne"
 					name="costPlusOne"
 					required
 					step="0.5"
 					bind:value={costPlusOne}
-					class="flex-1"
 				/>
-			</div>
+			</InputGroup.Root>
 		</Field>
 	</div>
 
 	<Field>
 		<Label>Withdrawal Deadline</Label>
-		<DateTimePicker value={eventDeadline} onchange={handleDeadlineChange} />
+		<div class="flex items-center gap-2">
+			<Popover.Root>
+				<Popover.Trigger
+					class={cn(
+						buttonVariants({
+							variant: 'outline',
+							className: 'bg-background w-[200px] justify-start text-left font-normal'
+						}),
+						!eventDeadlineValue && 'text-muted-foreground'
+					)}
+				>
+					<CalendarIcon class="mr-2 h-4 w-4" />
+					{formatDate(eventDeadlineValue)}
+				</Popover.Trigger>
+				<Popover.Content class="w-auto p-0" align="start">
+					<Calendar type="single" bind:value={eventDeadlineValue} />
+				</Popover.Content>
+			</Popover.Root>
+			<Input type="time" bind:value={eventDeadlineTimeValue} required class="w-auto" />
+		</div>
 	</Field>
 
 	<!-- Privacy toggle -->
