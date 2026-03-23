@@ -30,7 +30,7 @@
 		onCancel?: () => void;
 	}
 
-	let { mode, event, form, action = '?/default', onCancel }: Props = $props();
+	let { mode, event, form, action = '', onCancel }: Props = $props();
 
 	let saving = $state(false);
 	let timezone = $state('');

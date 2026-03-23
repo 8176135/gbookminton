@@ -84,6 +84,7 @@
 					>
 					<a
 						href="/forgot-password"
+						tabindex="-1"
 						class="text-xs font-medium text-indigo-400 hover:text-indigo-300">Forgot?</a
 					>
 				</div>
