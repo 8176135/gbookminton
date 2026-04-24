@@ -9,8 +9,12 @@ export const load: PageServerLoad = async ({ locals }) => {
 	// @ts-ignore - Better Auth custom fields (temporary until sync)
 	if (!session || session.user.role !== 'admin') {
 		throw redirect(302, '/dashboard');
-	}
-	return {};
+	return {
+		adminSettings: {
+			days: (session.user as any).adminDeadlineDays ?? 2,
+			time: (session.user as any).adminDeadlineTime ?? '17:00'
+		}
+	};
 };
 
 export const actions: Actions = {

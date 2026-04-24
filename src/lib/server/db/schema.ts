@@ -13,7 +13,9 @@ export const user = sqliteTable('user', {
 	balance: integer('balance').notNull().default(0), // in cents
 	shortCode: text('shortCode').notNull().unique(),
 	role: text('role').notNull().default('user'), // enum values: user, admin
-	accountType: text('accountType').notNull().default('plusone') // enum values: company, plusone
+	accountType: text('accountType').notNull().default('plusone'), // enum values: company, plusone
+	adminDeadlineDays: integer('adminDeadlineDays').notNull().default(2),
+	adminDeadlineTime: text('adminDeadlineTime').notNull().default('17:00')
 });
 
 export const session = sqliteTable('session', {

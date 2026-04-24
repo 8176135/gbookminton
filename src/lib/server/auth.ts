@@ -19,7 +19,9 @@ export const auth = betterAuth({
 			role: { type: 'string', required: true, defaultValue: 'user' },
 			balance: { type: 'number', required: true, defaultValue: 0 },
 			shortCode: { type: 'string', required: false },
-			accountType: { type: 'string', required: true, defaultValue: 'plusone' }
+			accountType: { type: 'string', required: true, defaultValue: 'plusone' },
+			adminDeadlineDays: { type: 'number', required: true, defaultValue: 2 },
+			adminDeadlineTime: { type: 'string', required: true, defaultValue: '17:00' }
 		}
 	} as const,
 	emailAndPassword: {
@@ -85,7 +87,9 @@ export const auth = betterAuth({
 							shortCode: code,
 							balance: 0,
 							role: 'user',
-							accountType
+							accountType,
+							adminDeadlineDays: 2,
+							adminDeadlineTime: '17:00'
 						}
 					};
 				}

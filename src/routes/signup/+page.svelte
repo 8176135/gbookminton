@@ -14,9 +14,9 @@
 		errorMsg = '';
 		try {
 			const { data, error } = await authClient.signUp.email({
-				email,
+				email: email.trim(),
 				password,
-				name
+				name: name.trim()
 			});
 
 			if (error) {

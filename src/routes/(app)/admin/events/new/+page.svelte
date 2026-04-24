@@ -3,7 +3,7 @@
 	import EventForm from '$lib/components/EventForm.svelte';
 	import type { PageProps } from './$types';
 
-	let { form }: PageProps = $props();
+	let { data, form }: PageProps = $props();
 </script>
 
 <svelte:head>
@@ -19,6 +19,6 @@
 			<h1 class="text-3xl font-bold tracking-tight text-white">Create New Event</h1>
 		</header>
 
-		<EventForm mode="create" form={form ?? undefined} />
+		<EventForm mode="create" form={form ?? undefined} adminSettings={data.adminSettings} />
 	</div>
 </div>

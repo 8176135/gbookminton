@@ -22,11 +22,17 @@ export const load: PageServerLoad = async ({ locals }) => {
 			accountType: user.accountType,
 			balance: user.balance,
 			shortCode: user.shortCode,
-			createdAt: user.createdAt
+			createdAt: user.createdAt,
+			adminDeadlineDays: user.adminDeadlineDays,
+			adminDeadlineTime: user.adminDeadlineTime
 		})
 		.from(user)
 		.where(eq(user.id, locals.session.user.id))
 		.limit(1);
+
+	if (!currentUser) {
+		throw redirect(302, '/login');
+	}
 
 	// Get user's event registrations with event details
 	const userRegistrations = await db
@@ -56,10 +62,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		}));
 
 	return {
-		user: {
-			...currentUser,
-			createdAt: currentUser.createdAt.toISOString()
-		},
+		user: currentUser,
 		pastEvents
 	};
 };
@@ -105,6 +108,31 @@ export const actions: Actions = {
 			success: true,
 			message:
 				'Email updated successfully. Your account type has been adjusted based on your new email domain.'
+		};
+	},
+	updateAdminSettings: async ({ request, locals }) => {
+		if (!locals.session || locals.session.user.role !== 'admin') {
+			return fail(403, { error: 'Forbidden' });
+		}
+
+		const data = await request.formData();
+		const days = parseInt(data.get('adminDeadlineDays') as string, 10);
+		const time = data.get('adminDeadlineTime') as string;
+
+		if (isNaN(days) || !time) {
+			return fail(400, { error: 'Invalid settings' });
+		}
+
+		const userId = locals.session.user.id;
+
+		await db
+			.update(user)
+			.set({ adminDeadlineDays: days, adminDeadlineTime: time, updatedAt: new Date() })
+			.where(eq(user.id, userId));
+
+		return {
+			adminSettingsSuccess: true,
+			message: 'Admin preferences updated successfully.'
 		};
 	}
 };

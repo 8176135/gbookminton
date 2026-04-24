@@ -17,11 +17,16 @@
 	let confirmPassword = $state('');
 	let email = $state('');
 
+	let adminDeadlineDays = $state(2);
+	let adminDeadlineTime = $state('17:00');
+
 	// Sync form state when user data loads
 	$effect(() => {
 		if (data.user) {
 			name = data.user.name ?? '';
 			email = data.user.email ?? '';
+			adminDeadlineDays = data.user.adminDeadlineDays ?? 2;
+			adminDeadlineTime = data.user.adminDeadlineTime ?? '17:00';
 		}
 	});
 
@@ -37,6 +42,10 @@
 	let emailError = $state('');
 	let emailSuccess = $state('');
 
+	let adminLoading = $state(false);
+	let adminError = $state('');
+	let adminSuccess = $state('');
+
 	// Handle form action results
 	$effect(() => {
 		if (form?.success && form?.message) {
@@ -46,6 +55,9 @@
 		} else if (form?.error) {
 			emailError = form.error;
 			emailSuccess = '';
+		} else if (form?.adminSettingsSuccess && form?.message) {
+			adminSuccess = form.message;
+			adminError = '';
 		}
 	});
 	const handleUpdateName = async (e: Event) => {
@@ -55,7 +67,7 @@
 		nameSuccess = '';
 		try {
 			const { error } = await authClient.updateUser({
-				name: name
+				name: name.trim()
 			});
 
 			if (error) {
@@ -339,6 +351,84 @@
 			</div>
 		</div>
 	</div>
+
+	<!-- Admin Preferences Section -->
+	{#if user?.role === 'admin'}
+		<div class="mt-8 rounded-3xl border border-indigo-500/30 bg-indigo-900/10 p-8 shadow-2xl backdrop-blur-2xl">
+			<h2 class="font-outfit mb-2 text-xl font-semibold text-white">Admin Preferences</h2>
+			<p class="mb-6 text-sm text-gray-400">Settings that apply when you create or manage events.</p>
+
+			{#if adminError}
+				<div class="mb-4 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">
+					{adminError}
+				</div>
+			{/if}
+
+			{#if adminSuccess}
+				<div class="mb-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-400">
+					{adminSuccess}
+				</div>
+			{/if}
+
+			<form
+				method="POST"
+				action="?/updateAdminSettings"
+				use:enhance={() => {
+					adminLoading = true;
+					adminError = '';
+					adminSuccess = '';
+					return async ({ update, result }) => {
+						adminLoading = false;
+						if (result.type === 'failure' && result.data?.error) {
+							adminError = result.data.error;
+						}
+						update();
+					};
+				}}
+				class="grid gap-6 md:grid-cols-2"
+			>
+				<div>
+					<label
+						for="adminDeadlineDays"
+						class="mb-1.5 block text-xs font-semibold tracking-wider text-gray-500 uppercase"
+					>Autoset Deadline (Days Before Event)</label>
+					<input
+						type="number"
+						id="adminDeadlineDays"
+						name="adminDeadlineDays"
+						bind:value={adminDeadlineDays}
+						required
+						class="w-full rounded-2xl border border-white/5 bg-white/5 px-4 py-3.5 text-white transition focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none"
+					/>
+				</div>
+
+				<div>
+					<label
+						for="adminDeadlineTime"
+						class="mb-1.5 block text-xs font-semibold tracking-wider text-gray-500 uppercase"
+					>Autoset Deadline Time</label>
+					<input
+						type="time"
+						id="adminDeadlineTime"
+						name="adminDeadlineTime"
+						bind:value={adminDeadlineTime}
+						required
+						class="w-full rounded-2xl border border-white/5 bg-white/5 px-4 py-3.5 text-white transition focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none"
+					/>
+				</div>
+
+				<div class="md:col-span-2">
+					<button
+						type="submit"
+						disabled={adminLoading}
+						class="font-outfit w-full rounded-2xl bg-indigo-600 px-4 py-3.5 font-bold text-white transition hover:bg-indigo-500 hover:shadow-lg hover:shadow-indigo-600/20 active:scale-[0.98] disabled:opacity-50"
+					>
+						{adminLoading ? 'Saving...' : 'Save Preferences'}
+					</button>
+				</div>
+			</form>
+		</div>
+	{/if}
 
 	<!-- Past Events Section -->
 	{#if pastEvents.length > 0}

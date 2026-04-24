@@ -94,6 +94,7 @@
 						isPrivate: ev.isPrivate
 					}}
 					{form}
+					adminSettings={data.adminSettings}
 					action="?/editEvent"
 					onCancel={() => (editing = false)}
 				/>

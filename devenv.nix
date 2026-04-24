@@ -17,6 +17,7 @@
     pkgs.python3
     pkgs.gcc
     pkgs.gnumake
+    pkgs.sqlitebrowser # Added for a native SQLite GUI
   ];
 
   # https://devenv.sh/languages/

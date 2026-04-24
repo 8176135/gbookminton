@@ -58,7 +58,11 @@ export const load = (async ({ locals, params }) => {
 					user: { name: s.user.name, id: s.user.id, email: '' }
 				})),
 		userSignupStatus:
-			signups.find((s) => s.signup.userId === session.user.id)?.signup.status ?? null
+			signups.find((s) => s.signup.userId === session.user.id)?.signup.status ?? null,
+		adminSettings: isAdmin ? {
+			days: (session.user as any).adminDeadlineDays ?? 2,
+			time: (session.user as any).adminDeadlineTime ?? '17:00'
+		} : undefined
 	};
 }) satisfies PageServerLoad;
 

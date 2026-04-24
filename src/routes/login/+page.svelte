@@ -13,7 +13,7 @@
 		errorMsg = '';
 		try {
 			const { data, error } = await authClient.signIn.email({
-				email,
+				email: email.trim(),
 				password
 			});
 

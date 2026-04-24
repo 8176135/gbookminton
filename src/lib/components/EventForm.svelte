@@ -35,9 +35,10 @@
 		form?: { error?: string } | null;
 		action?: string;
 		onCancel?: () => void;
+		adminSettings?: { days: number; time: string };
 	}
 
-	let { mode, event, form, action = '', onCancel }: Props = $props();
+	let { mode, event, form, action = '', onCancel, adminSettings }: Props = $props();
 
 	let saving = $state(false);
 	let timezone = $state('');
@@ -80,6 +81,17 @@
 			day: 'numeric',
 			year: 'numeric'
 		});
+	}
+
+	function handleAutosetDeadline() {
+		if (!eventDateValue) return;
+		const days = adminSettings?.days ?? 2;
+		const time = adminSettings?.time ?? '17:00';
+		
+		let d = new Date(eventDateValue.year, eventDateValue.month - 1, eventDateValue.day);
+		d.setDate(d.getDate() - days);
+		eventDeadlineValue = new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate());
+		eventDeadlineTimeValue = time;
 	}
 
 	let costCompany = $state('');
@@ -248,7 +260,19 @@
 	</div>
 
 	<Field>
-		<Label>Withdrawal Deadline</Label>
+		<div class="flex w-full items-center justify-between mb-1.5">
+			<Label>Withdrawal Deadline</Label>
+			{#if adminSettings}
+				<button 
+					type="button" 
+					class="text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors disabled:opacity-50" 
+					onclick={handleAutosetDeadline}
+					disabled={!eventDateValue}
+				>
+					Autoset (-{adminSettings.days}d)
+				</button>
+			{/if}
+		</div>
 		<div class="flex items-center gap-2">
 			<Popover.Root>
 				<Popover.Trigger

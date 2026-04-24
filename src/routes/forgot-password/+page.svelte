@@ -14,7 +14,7 @@
 		successMsg = '';
 		try {
 			const { data, error } = await authClient.requestPasswordReset({
-				email,
+				email: email.trim(),
 				redirectTo: '/reset-password'
 			});
 
