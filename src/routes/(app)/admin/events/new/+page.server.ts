@@ -35,7 +35,7 @@ export const actions: Actions = {
 		const costCompanyDollars = parseFloat(data.get('costCompany') as string);
 		const costPlusOneDollars = parseFloat(data.get('costPlusOne') as string);
 		const deadlineStr = data.get('deadline') as string;
-		const isPrivate = data.get('isPrivate') === 'true';
+		const visibility = data.get('visibility') as string || 'onlyCompany';
 
 		await db.insert(event).values({
 			id: crypto.randomUUID(),
@@ -48,7 +48,7 @@ export const actions: Actions = {
 			costCompany: Math.round(costCompanyDollars * 100),
 			costPlusOne: Math.round(costPlusOneDollars * 100),
 			deadline: new Date(deadlineStr),
-			isPrivate,
+			visibility,
 			createdAt: new Date(),
 			updatedAt: new Date()
 		});

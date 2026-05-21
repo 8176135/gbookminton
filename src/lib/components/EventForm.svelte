@@ -10,6 +10,7 @@
 	import { Field } from '$lib/components/ui/field/index.js';
 	import { Calendar } from '$lib/components/ui/calendar/index.js';
 	import * as Popover from '$lib/components/ui/popover/index.js';
+	import * as Select from '$lib/components/ui/select/index.js';
 	import * as InputGroup from '$lib/components/ui/input-group/index.js';
 	import NumberInput from './NumberInput.svelte';
 	import { Calendar as CalendarIcon } from 'lucide-svelte';
@@ -30,7 +31,7 @@
 			capacity: number;
 			costCompany: number;
 			costPlusOne: number;
-			isPrivate: boolean;
+			visibility: string;
 		};
 		form?: { error?: string } | null;
 		action?: string;
@@ -42,7 +43,7 @@
 
 	let saving = $state(false);
 	let timezone = $state('');
-	let isPrivate = $state(false);
+	let visibility = $state('onlyCompany');
 
 	let eventDateValue = $state<CalendarDate | undefined>();
 	let eventTimeValue = $state('09:00');
@@ -113,7 +114,7 @@
 			eventDeadlineValue = new CalendarDate(dl.getFullYear(), dl.getMonth() + 1, dl.getDate());
 			eventDeadlineTimeValue = `${dl.getHours().toString().padStart(2, '0')}:${dl.getMinutes().toString().padStart(2, '0')}`;
 
-			isPrivate = event.isPrivate;
+			visibility = event.visibility;
 			costCompany = (event.costCompany / 100).toFixed(2);
 			costPlusOne = (event.costPlusOne / 100).toFixed(2);
 			duration = String(event.duration);
@@ -160,7 +161,7 @@
 
 	<input type="hidden" name="date" value={eventDate?.toISOString() ?? ''} />
 	<input type="hidden" name="deadline" value={eventDeadline?.toISOString() ?? ''} />
-	<input type="hidden" name="isPrivate" value={String(isPrivate)} />
+	<input type="hidden" name="visibility" value={visibility} />
 
 	<Field>
 		<Label for="title">Event Title</Label>
@@ -295,16 +296,30 @@
 		</div>
 	</Field>
 
-	<!-- Privacy toggle -->
+	<!-- Visibility Selection -->
 	<Field>
-		<div class="flex items-center gap-3">
-			<Switch bind:checked={isPrivate} />
-			<Label class="cursor-pointer">
-				Private event <span class="text-muted-foreground"
-					>(hide attendee names from non-admins)</span
-				>
-			</Label>
+		<Label>Event Visibility</Label>
+		<div class="mt-1.5">
+			<Select.Root type="single" name="visibility" bind:value={visibility}>
+				<Select.Trigger class="w-[200px]">
+					{visibility === 'private' ? 'Private' : visibility === 'public' ? 'Public' : 'Only Company'}
+				</Select.Trigger>
+				<Select.Content>
+					<Select.Item value="private" label="Private">Private</Select.Item>
+					<Select.Item value="onlyCompany" label="Only Company">Only Company</Select.Item>
+					<Select.Item value="public" label="Public">Public</Select.Item>
+				</Select.Content>
+			</Select.Root>
 		</div>
+		<p class="text-muted-foreground mt-2 text-sm">
+			{#if visibility === 'private'}
+				Only admins can see who has joined.
+			{:else if visibility === 'onlyCompany'}
+				Company accounts and admins can see who has joined.
+			{:else}
+				Everyone can see who has joined.
+			{/if}
+		</p>
 	</Field>
 
 	{#if form?.error}

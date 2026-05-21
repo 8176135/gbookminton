@@ -85,7 +85,7 @@ export async function pollUpBankTransactions() {
 								userId: matchedUser.id,
 								amount: amount,
 								reference: txId,
-								type: 'deposit',
+								type: 'bank_deposit',
 								date: txDate
 							});
 

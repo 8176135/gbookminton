@@ -9,8 +9,9 @@ export enum EventSignupStatus {
 
 // Transaction type values
 export enum TransactionType {
-	Deposit = 'deposit',
-	Deduction = 'deduction'
+	BankDeposit = 'bank_deposit',
+	SignupDeduction = 'signup_deduction',
+	WithdrawRefund = 'withdraw_refund'
 }
 
 // User role values
@@ -23,4 +24,11 @@ export enum UserRole {
 export enum AccountType {
 	PlusOne = 'plusone',
 	Company = 'company'
+}
+
+// Event visibility values
+export enum EventVisibility {
+	Private = 'private',
+	OnlyCompany = 'onlyCompany',
+	Public = 'public'
 }

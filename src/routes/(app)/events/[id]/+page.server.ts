@@ -16,6 +16,8 @@ export const load = (async ({ locals, params }) => {
 	const [ev] = await db.select().from(event).where(eq(event.id, id)).limit(1);
 	if (!ev) throw redirect(302, '/dashboard');
 
+	const [currentUser] = await db.select().from(user).where(eq(user.id, session.user.id)).limit(1);
+
 	const signups = await db
 		.select({
 			signup: eventSignup,
@@ -32,8 +34,13 @@ export const load = (async ({ locals, params }) => {
 		.filter((s) => s.signup.status === 'waitlist')
 		.sort((a, b) => a.signup.createdAt.getTime() - b.signup.createdAt.getTime());
 
-	// Non-admins: if event is private, strip personal details
-	if (!isAdmin && ev.isPrivate) {
+	// Non-admins: check if user is allowed to see attendees
+	const canSeeAttendees =
+		isAdmin ||
+		ev.visibility === 'public' ||
+		(ev.visibility === 'onlyCompany' && currentUser.accountType === 'company');
+
+	if (!canSeeAttendees) {
 		return {
 			event: ev,
 			isAdmin: false,
@@ -41,7 +48,8 @@ export const load = (async ({ locals, params }) => {
 			waitlistCount: waitlist.length,
 			signups: null,
 			userSignupStatus:
-				signups.find((s) => s.signup.userId === session.user.id)?.signup.status ?? null
+				signups.find((s) => s.signup.userId === session.user.id)?.signup.status ?? null,
+			currentUser: { balance: currentUser.balance, accountType: currentUser.accountType }
 		};
 	}
 
@@ -59,6 +67,7 @@ export const load = (async ({ locals, params }) => {
 				})),
 		userSignupStatus:
 			signups.find((s) => s.signup.userId === session.user.id)?.signup.status ?? null,
+		currentUser: { balance: currentUser.balance, accountType: currentUser.accountType },
 		adminSettings: isAdmin ? {
 			days: (session.user as any).adminDeadlineDays ?? 2,
 			time: (session.user as any).adminDeadlineTime ?? '17:00'
@@ -86,7 +95,7 @@ export const actions: Actions = {
 		const costCompanyDollars = parseFloat(data.get('costCompany') as string);
 		const costPlusOneDollars = parseFloat(data.get('costPlusOne') as string);
 		const deadlineStr = data.get('deadline') as string;
-		const isPrivate = data.get('isPrivate') === 'true';
+		const visibility = data.get('visibility') as string || 'onlyCompany';
 
 		if (
 			!title ||
@@ -112,7 +121,7 @@ export const actions: Actions = {
 				costCompany: Math.round(costCompanyDollars * 100),
 				costPlusOne: Math.round(costPlusOneDollars * 100),
 				deadline: new Date(deadlineStr),
-				isPrivate,
+				visibility,
 				updatedAt: new Date()
 			})
 			.where(eq(event.id, id));

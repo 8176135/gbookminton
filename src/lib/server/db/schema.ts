@@ -70,7 +70,7 @@ export const event = sqliteTable('event', {
 	costCompany: integer('costCompany').notNull().default(0), // in cents
 	costPlusOne: integer('costPlusOne').notNull().default(0), // in cents
 	isLocked: integer('isLocked', { mode: 'boolean' }).notNull().default(false),
-	isPrivate: integer('isPrivate', { mode: 'boolean' }).notNull().default(false),
+	visibility: text('visibility').notNull().default('onlyCompany'), // enum values: private, onlyCompany, public
 	createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
 	updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull()
 });
@@ -92,9 +92,10 @@ export const transaction = sqliteTable('transaction', {
 	userId: text('userId')
 		.notNull()
 		.references(() => user.id),
-	amount: integer('amount').notNull(), // positive for deposit, positive for deduction
+	amount: integer('amount').notNull(), // positive for deposit, negative for deduction
 	reference: text('reference').notNull(), // up bank reference or event id
-	type: text('type').notNull(), // enum values: deposit, deduction
+	type: text('type').notNull(), // enum values: bank_deposit, signup_deduction, withdraw_refund
+	originalTransactionId: text('originalTransactionId'),
 	date: integer('date', { mode: 'timestamp' }).notNull()
 });
 

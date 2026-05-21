@@ -17,3 +17,13 @@ In addition to the general replacements (look at what is reasonable, and give me
 we should also replace the event datetime and deadline datetime inputs with the calendar component.
 
 Add the withdraw/signup button and your current status (signed up / waitlisted) into the event page.
+
+Bug, withdrawing does not restore account balance.
+
+Also replace badge
+
+
+Create a expand button on the main dashboard to expand the box to show 
+people already joined
+
+

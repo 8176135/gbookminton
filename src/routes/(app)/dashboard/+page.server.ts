@@ -68,6 +68,31 @@ export const load = (async ({ locals }) => {
 		enrollmentCountMap[count.eventId] = count.count;
 	}
 
+	// Get names of all enrolled users
+	const enrolledUsersData = await db
+		.select({
+			eventId: eventSignup.eventId,
+			userName: user.name,
+			status: eventSignup.status
+		})
+		.from(eventSignup)
+		.innerJoin(user, eq(eventSignup.userId, user.id))
+		.where(sql`${eventSignup.status} IN ('listed', 'locked')`);
+
+	const enrolledUsersMap: Record<string, {name: string, status: string}[]> = {};
+	const canViewAttendeesMap: Record<string, boolean> = {};
+
+	for (const ev of allEvents) {
+		const canSee = session.user.role === 'admin' || ev.visibility === 'public' || (ev.visibility === 'onlyCompany' && currentUser.accountType === 'company');
+		canViewAttendeesMap[ev.id] = canSee;
+		
+		if (canSee) {
+			enrolledUsersMap[ev.id] = enrolledUsersData
+				.filter((s) => s.eventId === ev.id)
+				.map((s) => ({ name: s.userName, status: s.status }));
+		}
+	}
+
 	return {
 		user: currentUser,
 		currentEvents,
@@ -75,7 +100,9 @@ export const load = (async ({ locals }) => {
 		pastEvents,
 		isAdmin: session.user.role === 'admin',
 		signupStatusMap,
-		enrollmentCountMap
+		enrollmentCountMap,
+		enrolledUsersMap,
+		canViewAttendeesMap
 	};
 }) satisfies PageServerLoad;
 
@@ -119,6 +146,10 @@ export const actions: Actions = {
 		const [currentUser] = await db.select().from(user).where(eq(user.id, session.user.id)).limit(1);
 		const cost = currentUser.accountType === 'company' ? ev.costCompany : ev.costPlusOne;
 
+		if (shouldCharge && cost > 0 && currentUser.balance < cost) {
+			return { error: 'Insufficient funds to secure a spot for this event' };
+		}
+
 		if (existing) {
 			await db
 				.update(eventSignup)
@@ -146,9 +177,9 @@ export const actions: Actions = {
 			await db.insert(transaction).values({
 				id: crypto.randomUUID(),
 				userId: session.user.id,
-				amount: cost,
+				amount: -cost, // negative for deduction
 				reference: eventId,
-				type: 'deduction',
+				type: 'signup_deduction',
 				date: new Date()
 			});
 		}
@@ -184,22 +215,96 @@ export const actions: Actions = {
 
 		const wasListed = signup.status === 'listed';
 
-		await db.update(eventSignup).set({ status: 'withdrawn' }).where(eq(eventSignup.id, signup.id));
-
-		// If user was listed, promote the first waitlisted person
+		// If user was listed, refund their transaction
 		if (wasListed) {
-			const [firstWaitlist] = await db
+			// Find original deduction transaction
+			const [originalTx] = await db
 				.select()
-				.from(eventSignup)
-				.where(and(eq(eventSignup.eventId, eventId), eq(eventSignup.status, 'waitlist')))
-				.orderBy(eventSignup.createdAt)
+				.from(transaction)
+				.where(
+					and(
+						eq(transaction.userId, session.user.id),
+						eq(transaction.reference, eventId),
+						eq(transaction.type, 'signup_deduction')
+					)
+				)
+				.orderBy(desc(transaction.date))
 				.limit(1);
 
-			if (firstWaitlist) {
+			if (originalTx) {
+				const refundAmount = Math.abs(originalTx.amount);
+
+				// Revert user balance
+				const [currentUser] = await db.select().from(user).where(eq(user.id, session.user.id)).limit(1);
 				await db
-					.update(eventSignup)
-					.set({ status: 'listed' })
-					.where(eq(eventSignup.id, firstWaitlist.id));
+					.update(user)
+					.set({ balance: currentUser.balance + refundAmount, updatedAt: new Date() })
+					.where(eq(user.id, session.user.id));
+
+				// Insert withdraw_refund transaction
+				await db.insert(transaction).values({
+					id: crypto.randomUUID(),
+					userId: session.user.id,
+					amount: refundAmount,
+					reference: eventId,
+					type: 'withdraw_refund',
+					originalTransactionId: originalTx.id,
+					date: new Date()
+				});
+			}
+		}
+
+		await db.update(eventSignup).set({ status: 'withdrawn' }).where(eq(eventSignup.id, signup.id));
+
+		// If user was listed, try to promote waitlisted people
+		if (wasListed) {
+			const waitlisted = await db
+				.select({
+					signup: eventSignup,
+					user: user
+				})
+				.from(eventSignup)
+				.innerJoin(user, eq(eventSignup.userId, user.id))
+				.where(and(eq(eventSignup.eventId, eventId), eq(eventSignup.status, 'waitlist')))
+				.orderBy(eventSignup.createdAt);
+
+			for (const wl of waitlisted) {
+				const wlUser = wl.user;
+				const cost = wlUser.accountType === 'company' ? ev.costCompany : ev.costPlusOne;
+
+				if (cost === 0 || wlUser.balance >= cost) {
+					// Promote this user
+					await db
+						.update(eventSignup)
+						.set({ status: 'listed' })
+						.where(eq(eventSignup.id, wl.signup.id));
+
+					if (cost > 0) {
+						// Deduct balance
+						await db
+							.update(user)
+							.set({ balance: wlUser.balance - cost, updatedAt: new Date() })
+							.where(eq(user.id, wlUser.id));
+
+						// Record transaction
+						await db.insert(transaction).values({
+							id: crypto.randomUUID(),
+							userId: wlUser.id,
+							amount: -cost, // negative for deduction
+							reference: eventId,
+							type: 'signup_deduction',
+							date: new Date()
+						});
+					}
+					// Only promote one person
+					break;
+				} else {
+					// User doesn't have sufficient funds, skip and mark as removed
+					await db
+						.update(eventSignup)
+						.set({ status: 'removed' })
+						.where(eq(eventSignup.id, wl.signup.id));
+				}
 			}
 		}
 	}

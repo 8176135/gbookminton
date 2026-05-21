@@ -29,37 +29,11 @@ export async function processDeadlines() {
 					const { signup, user: u } = row;
 
 					if (signup.status === 'listed') {
-						// Use average of both prices since we don't track individual signup costs
-						const cost = Math.round((ev.costCompany + ev.costPlusOne) / 2);
-						if (u.balance >= cost) {
-							// Deduct balance
-							await tx
-								.update(user)
-								.set({ balance: u.balance - cost })
-								.where(eq(user.id, u.id));
-
-							// Lock signup
-							await tx
-								.update(eventSignup)
-								.set({ status: 'locked' })
-								.where(eq(eventSignup.id, signup.id));
-
-							// Record deduction
-							await tx.insert(transaction).values({
-								id: crypto.randomUUID(),
-								userId: u.id,
-								amount: -cost, // negative for deductions
-								reference: ev.id,
-								type: 'deduction',
-								date: new Date()
-							});
-						} else {
-							// Remove due to insufficient funds
-							await tx
-								.update(eventSignup)
-								.set({ status: 'removed' })
-								.where(eq(eventSignup.id, signup.id));
-						}
+						// Lock signup
+						await tx
+							.update(eventSignup)
+							.set({ status: 'locked' })
+							.where(eq(eventSignup.id, signup.id));
 					} else if (signup.status === 'waitlist') {
 						// Waitlist members don't get in; mark them as withdrawn
 						await tx

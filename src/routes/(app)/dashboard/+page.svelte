@@ -13,8 +13,11 @@
 	let isAdmin = $derived(data.isAdmin);
 	let statusMap = $derived(data.signupStatusMap);
 	let enrollmentCountMap = $derived(data.enrollmentCountMap);
+	let enrolledUsersMap = $derived(data.enrolledUsersMap);
+	let canViewAttendeesMap = $derived(data.canViewAttendeesMap);
 
 	let loadingIds = $state<Record<string, boolean>>({});
+	let expandedEvents = $state<Record<string, boolean>>({});
 	let showPastEvents = $state(false);
 
 	function getStatusVariant(status: string | undefined) {
@@ -141,6 +144,35 @@
 								</p>
 							</div>
 
+							{#if canViewAttendeesMap[ev.id]}
+								<div class="mb-4 mt-2 border-t border-emerald-800/30 pt-3">
+									<button 
+										class="flex w-full items-center justify-between text-sm font-medium text-emerald-400/80 hover:text-emerald-300 transition-colors"
+										onclick={() => expandedEvents[ev.id] = !expandedEvents[ev.id]}
+									>
+										<span>{expandedEvents[ev.id] ? 'Hide' : 'Show'} Attendees</span>
+										<svg class="h-4 w-4 transition-transform {expandedEvents[ev.id] ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+										</svg>
+									</button>
+									{#if expandedEvents[ev.id]}
+										<div class="mt-3 space-y-1.5 max-h-32 overflow-y-auto pr-2">
+											{#each enrolledUsersMap[ev.id] || [] as attendee}
+												<div class="flex items-center justify-between text-sm">
+													<span class="text-gray-300">{attendee.name}</span>
+													{#if attendee.status === 'locked'}
+														<span class="text-xs text-indigo-400">Locked</span>
+													{/if}
+												</div>
+											{/each}
+											{#if (enrolledUsersMap[ev.id] || []).length === 0}
+												<p class="text-xs text-muted-foreground italic">No one has joined yet.</p>
+											{/if}
+										</div>
+									{/if}
+								</div>
+							{/if}
+
 							<div class="mt-auto flex items-center justify-between border-t border-gray-800 pt-4">
 								<Badge variant="outline" class="border-emerald-500/30 text-emerald-400"
 									>Happening Now</Badge
@@ -207,15 +239,51 @@
 							</p>
 						</div>
 
+						{#if canViewAttendeesMap[ev.id]}
+							<div class="mb-4 mt-2 border-t border-gray-800/50 pt-3">
+								<button 
+									class="flex w-full items-center justify-between text-sm font-medium text-gray-400 hover:text-gray-300 transition-colors"
+									onclick={() => expandedEvents[ev.id] = !expandedEvents[ev.id]}
+								>
+									<span>{expandedEvents[ev.id] ? 'Hide' : 'Show'} Attendees</span>
+									<svg class="h-4 w-4 transition-transform {expandedEvents[ev.id] ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+									</svg>
+								</button>
+								{#if expandedEvents[ev.id]}
+									<div class="mt-3 space-y-1.5 max-h-32 overflow-y-auto pr-2">
+										{#each enrolledUsersMap[ev.id] || [] as attendee}
+											<div class="flex items-center justify-between text-sm">
+												<span class="text-gray-300">{attendee.name}</span>
+												{#if attendee.status === 'locked'}
+													<span class="text-xs text-indigo-400">Locked</span>
+												{/if}
+											</div>
+										{/each}
+										{#if (enrolledUsersMap[ev.id] || []).length === 0}
+											<p class="text-xs text-muted-foreground italic">No one has joined yet.</p>
+										{/if}
+									</div>
+								{/if}
+							</div>
+						{/if}
+
 						<div class="mt-auto flex items-center justify-between border-t border-gray-800 pt-4">
 							{#if status === 'locked'}
 								<Badge variant="secondary" class={getStatusClass(status)}>Locked In</Badge>
 							{:else if status === 'removed'}
 								<Badge variant="destructive">Removed (No Funds)</Badge>
 							{:else if status === 'listed' || status === 'waitlist'}
-								<Badge variant={getStatusVariant(status)} class={getStatusClass(status)}>
-									{status === 'listed' ? 'Enrolled' : 'Waitlisted'}
-								</Badge>
+								<div class="flex items-center gap-2">
+									<Badge variant={getStatusVariant(status)} class={getStatusClass(status)}>
+										{status === 'listed' ? 'Enrolled' : 'Waitlisted'}
+									</Badge>
+									{#if status === 'waitlist' && user.balance < (user.accountType === 'company' ? ev.costCompany : ev.costPlusOne)}
+										<span class="text-xs font-medium text-red-400" title="Insufficient funds for promotion">
+											⚠️ Needs funds
+										</span>
+									{/if}
+								</div>
 
 								<form
 									method="POST"
@@ -340,6 +408,35 @@
 										<span class="text-gray-300">{enrolled} / {ev.capacity}</span>
 									</p>
 								</div>
+
+								{#if canViewAttendeesMap[ev.id]}
+									<div class="mb-4 mt-2 border-t border-gray-800/50 pt-3">
+										<button 
+											class="flex w-full items-center justify-between text-sm font-medium text-gray-400 hover:text-gray-300 transition-colors"
+											onclick={() => expandedEvents[ev.id] = !expandedEvents[ev.id]}
+										>
+											<span>{expandedEvents[ev.id] ? 'Hide' : 'Show'} Attendees</span>
+											<svg class="h-4 w-4 transition-transform {expandedEvents[ev.id] ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+											</svg>
+										</button>
+										{#if expandedEvents[ev.id]}
+											<div class="mt-3 space-y-1.5 max-h-32 overflow-y-auto pr-2">
+												{#each enrolledUsersMap[ev.id] || [] as attendee}
+													<div class="flex items-center justify-between text-sm">
+														<span class="text-gray-300">{attendee.name}</span>
+														{#if attendee.status === 'locked'}
+															<span class="text-xs text-indigo-400">Locked</span>
+														{/if}
+													</div>
+												{/each}
+												{#if (enrolledUsersMap[ev.id] || []).length === 0}
+													<p class="text-xs text-muted-foreground italic">No one has joined yet.</p>
+												{/if}
+											</div>
+										{/if}
+									</div>
+								{/if}
 
 								<div class="mt-auto border-t border-gray-800 pt-4">
 									<a

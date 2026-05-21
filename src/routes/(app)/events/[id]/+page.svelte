@@ -10,6 +10,7 @@
 	let isAdmin = $derived(data.isAdmin);
 	let signups = $derived(data.signups);
 	let userSignupStatus = $derived(data.userSignupStatus);
+	let currentUser = $derived(data.currentUser);
 
 	let listed = $derived(
 		signups
@@ -91,7 +92,7 @@
 						capacity: ev.capacity,
 						costCompany: ev.costCompany,
 						costPlusOne: ev.costPlusOne,
-						isPrivate: ev.isPrivate
+						visibility: ev.visibility
 					}}
 					{form}
 					adminSettings={data.adminSettings}
@@ -119,11 +120,17 @@
 								>
 							</div>
 						</div>
-						{#if ev.isPrivate && isAdmin}
+						{#if ev.visibility === 'private' && isAdmin}
 							<div class="mt-2">
-								<Badge variant="outline" class="border-yellow-500/30 text-yellow-400"
-									>🔒 Private</Badge
-								>
+								<Badge variant="outline" class="border-yellow-500/30 text-yellow-400">🔒 Private</Badge>
+							</div>
+						{:else if ev.visibility === 'onlyCompany'}
+							<div class="mt-2">
+								<Badge variant="outline" class="border-blue-500/30 text-blue-400">🏢 Company Only</Badge>
+							</div>
+						{:else if ev.visibility === 'public'}
+							<div class="mt-2">
+								<Badge variant="outline" class="border-emerald-500/30 text-emerald-400">🌍 Public</Badge>
 							</div>
 						{/if}
 						{#if ev.isLocked}
@@ -160,12 +167,12 @@
 				<div
 					class="overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/50 backdrop-blur-xl"
 				>
-					{#if !isAdmin && ev.isPrivate}
-						<!-- Private event: only show count to non-admins -->
+					{#if !signups}
+						<!-- Attendee list is hidden -->
 						<div class="flex flex-col items-center justify-center gap-1 p-8 text-center">
 							<p class="text-3xl font-bold text-white">{data.listedCount}</p>
 							<p class="text-muted-foreground text-sm">players registered</p>
-							<p class="mt-2 text-xs text-gray-600">Attendee list is private for this event.</p>
+							<p class="mt-2 text-xs text-gray-600">Attendee list is hidden for this event.</p>
 						</div>
 					{:else}
 						<ul class="divide-y divide-gray-800">
@@ -196,7 +203,7 @@
 					<div
 						class="overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/50 backdrop-blur-xl"
 					>
-						{#if !isAdmin && ev.isPrivate}
+						{#if !signups}
 							<div class="flex flex-col items-center justify-center gap-1 p-8 text-center">
 								<p class="text-3xl font-bold text-white">{data.waitlistCount}</p>
 								<p class="text-muted-foreground text-sm">on waitlist</p>
@@ -262,6 +269,9 @@
 						>
 							{userSignupStatus}
 						</Badge>
+						{#if userSignupStatus === 'waitlist' && currentUser && currentUser.balance < (currentUser.accountType === 'company' ? ev.costCompany : ev.costPlusOne)}
+						<Badge variant="destructive" class="ml-2">Needs Funds to be Promoted</Badge>
+						{/if}
 					</p>
 				</div>
 			</div>
