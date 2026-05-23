@@ -46,6 +46,13 @@
 	let adminError = $state('');
 	let adminSuccess = $state('');
 
+	let plusOneName = $state('');
+	let plusOneEmail = $state('');
+	let plusOnePassword = $state('');
+	let inviteLoading = $state(false);
+	let inviteError = $state('');
+	let inviteSuccess = $state('');
+
 	// Handle form action results
 	$effect(() => {
 		if (form?.success && form?.message) {
@@ -352,20 +359,216 @@
 		</div>
 	</div>
 
+	<!-- Invited Plus-Ones Section -->
+	{#if user?.accountType === 'company' || user?.role === 'admin'}
+		<div
+			class="mt-8 rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-2xl"
+		>
+			<div
+				class="mb-6 flex flex-col justify-between gap-4 border-b border-white/10 pb-6 sm:flex-row sm:items-center"
+			>
+				<div>
+					<h2 class="font-outfit text-2xl font-bold text-white">Guest / Plus-One Invites</h2>
+					<p class="mt-1 text-sm text-gray-400">
+						Invite and manage guest accounts linked to your billing.
+					</p>
+				</div>
+				<div
+					class="flex items-center gap-2 rounded-2xl border border-indigo-500/20 bg-indigo-500/10 px-4 py-2 text-indigo-300"
+				>
+					<span class="text-sm font-semibold">Invites Used:</span>
+					<span class="font-mono text-lg font-bold">
+						{user?.role === 'admin' ? '∞' : `${data.invitedCount} / ${user?.allowedPlusOnes}`}
+					</span>
+				</div>
+			</div>
+
+			<div class="grid gap-8 lg:grid-cols-2">
+				<!-- List of Plus-Ones -->
+				<div class="space-y-4">
+					<h3 class="font-outfit text-lg font-semibold text-white">Your Invited Plus-Ones</h3>
+
+					{#if data.invitedPlusOnes.length === 0}
+						<div
+							class="rounded-2xl border border-dashed border-white/10 p-8 text-center text-gray-500"
+						>
+							<p>You haven't invited any plus-ones yet.</p>
+							<p class="mt-1 text-xs">Fill out the form to create a plus-one account.</p>
+						</div>
+					{:else}
+						<div class="space-y-3">
+							{#each data.invitedPlusOnes as guest}
+								<div
+									class="flex items-center justify-between rounded-2xl border border-white/5 bg-white/5 p-4 transition hover:border-white/10 hover:bg-white/10"
+								>
+									<div>
+										<h4 class="font-semibold text-white">{guest.name}</h4>
+										<p class="text-xs text-gray-400">{guest.email}</p>
+										<p class="mt-1 text-[10px] text-gray-500">
+											Joined <LocalDate date={guest.createdAt} />
+										</p>
+									</div>
+									<div class="text-right">
+										<p class="text-xs text-gray-400">Balance</p>
+										<p
+											class="text-sm font-bold {guest.balance < 0
+												? 'text-rose-400'
+												: 'text-emerald-400'}"
+										>
+											${(guest.balance / 100).toFixed(2)}
+										</p>
+									</div>
+								</div>
+							{/each}
+						</div>
+					{/if}
+				</div>
+
+				<!-- Invite Form -->
+				<div>
+					<h3 class="font-outfit mb-4 text-lg font-semibold text-white">Invite a New Guest</h3>
+
+					{#if user?.role !== 'admin' && data.invitedCount >= (user?.allowedPlusOnes ?? 1)}
+						<div
+							class="rounded-2xl border border-yellow-500/20 bg-yellow-500/10 p-6 text-sm text-yellow-400"
+						>
+							<h4 class="mb-1 font-semibold">Invite Limit Reached</h4>
+							<p>
+								You have used all of your allowed guest invitations. If you need to add more guests,
+								please contact an administrator to request a higher limit.
+							</p>
+						</div>
+					{:else}
+						{#if inviteError}
+							<div
+								class="mb-4 rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-400"
+							>
+								{inviteError}
+							</div>
+						{/if}
+
+						{#if inviteSuccess}
+							<div
+								class="mb-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-400"
+							>
+								{inviteSuccess}
+							</div>
+						{/if}
+
+						<form
+							method="POST"
+							action="?/invitePlusOne"
+							use:enhance={() => {
+								inviteLoading = true;
+								inviteError = '';
+								inviteSuccess = '';
+								return async ({ result, update }) => {
+									inviteLoading = false;
+									if (result.type === 'failure' && result.data) {
+										const data = result.data as any;
+										if (data.error) inviteError = data.error;
+									} else if (result.type === 'success' && result.data) {
+										const data = result.data as any;
+										if (data.message) {
+											inviteSuccess = data.message;
+											plusOneName = '';
+											plusOneEmail = '';
+											plusOnePassword = '';
+											await invalidateAll();
+										}
+									}
+									update();
+								};
+							}}
+							class="space-y-4"
+						>
+							<div>
+								<label
+									for="invite-name"
+									class="mb-1.5 block text-xs font-semibold tracking-wider text-gray-500 uppercase"
+									>Guest's Name</label
+								>
+								<input
+									type="text"
+									id="invite-name"
+									name="name"
+									bind:value={plusOneName}
+									required
+									placeholder="e.g. John Doe"
+									class="w-full rounded-2xl border border-white/5 bg-white/5 px-4 py-3.5 text-white transition placeholder:text-gray-600 focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none"
+								/>
+							</div>
+
+							<div>
+								<label
+									for="invite-email"
+									class="mb-1.5 block text-xs font-semibold tracking-wider text-gray-500 uppercase"
+									>Guest's Email</label
+								>
+								<input
+									type="email"
+									id="invite-email"
+									name="email"
+									bind:value={plusOneEmail}
+									required
+									placeholder="e.g. guest@example.com"
+									class="w-full rounded-2xl border border-white/5 bg-white/5 px-4 py-3.5 text-white transition placeholder:text-gray-600 focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none"
+								/>
+							</div>
+
+							<div>
+								<label
+									for="invite-password"
+									class="mb-1.5 block text-xs font-semibold tracking-wider text-gray-500 uppercase"
+									>Set Password</label
+								>
+								<input
+									type="password"
+									id="invite-password"
+									name="password"
+									bind:value={plusOnePassword}
+									required
+									placeholder="At least 8 characters"
+									class="w-full rounded-2xl border border-white/5 bg-white/5 px-4 py-3.5 text-white transition placeholder:text-gray-600 focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none"
+								/>
+							</div>
+
+							<button
+								type="submit"
+								disabled={inviteLoading}
+								class="font-outfit w-full rounded-2xl bg-indigo-600 px-4 py-3.5 font-bold text-white transition hover:bg-indigo-500 hover:shadow-lg hover:shadow-indigo-600/20 active:scale-[0.98] disabled:opacity-50"
+							>
+								{inviteLoading ? 'Creating Guest...' : 'Create & Invite Guest'}
+							</button>
+						</form>
+					{/if}
+				</div>
+			</div>
+		</div>
+	{/if}
+
 	<!-- Admin Preferences Section -->
 	{#if user?.role === 'admin'}
-		<div class="mt-8 rounded-3xl border border-indigo-500/30 bg-indigo-900/10 p-8 shadow-2xl backdrop-blur-2xl">
+		<div
+			class="mt-8 rounded-3xl border border-indigo-500/30 bg-indigo-900/10 p-8 shadow-2xl backdrop-blur-2xl"
+		>
 			<h2 class="font-outfit mb-2 text-xl font-semibold text-white">Admin Preferences</h2>
-			<p class="mb-6 text-sm text-gray-400">Settings that apply when you create or manage events.</p>
+			<p class="mb-6 text-sm text-gray-400">
+				Settings that apply when you create or manage events.
+			</p>
 
 			{#if adminError}
-				<div class="mb-4 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">
+				<div
+					class="mb-4 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400"
+				>
 					{adminError}
 				</div>
 			{/if}
 
 			{#if adminSuccess}
-				<div class="mb-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-400">
+				<div
+					class="mb-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-400"
+				>
 					{adminSuccess}
 				</div>
 			{/if}
@@ -379,8 +582,9 @@
 					adminSuccess = '';
 					return async ({ update, result }) => {
 						adminLoading = false;
-						if (result.type === 'failure' && result.data?.error) {
-							adminError = result.data.error;
+						if (result.type === 'failure' && result.data) {
+							const data = result.data as any;
+							if (data.error) adminError = data.error;
 						}
 						update();
 					};
@@ -391,7 +595,8 @@
 					<label
 						for="adminDeadlineDays"
 						class="mb-1.5 block text-xs font-semibold tracking-wider text-gray-500 uppercase"
-					>Autoset Deadline (Days Before Event)</label>
+						>Autoset Deadline (Days Before Event)</label
+					>
 					<input
 						type="number"
 						id="adminDeadlineDays"
@@ -406,7 +611,8 @@
 					<label
 						for="adminDeadlineTime"
 						class="mb-1.5 block text-xs font-semibold tracking-wider text-gray-500 uppercase"
-					>Autoset Deadline Time</label>
+						>Autoset Deadline Time</label
+					>
 					<input
 						type="time"
 						id="adminDeadlineTime"

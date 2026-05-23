@@ -21,13 +21,15 @@ export const auth = betterAuth({
 			shortCode: { type: 'string', required: false },
 			accountType: { type: 'string', required: true, defaultValue: 'plusone' },
 			adminDeadlineDays: { type: 'number', required: true, defaultValue: 2 },
-			adminDeadlineTime: { type: 'string', required: true, defaultValue: '17:00' }
+			adminDeadlineTime: { type: 'string', required: true, defaultValue: '17:00' },
+			invitedById: { type: 'string', required: false },
+			allowedPlusOnes: { type: 'number', required: true, defaultValue: 1 }
 		}
 	} as const,
 	emailAndPassword: {
 		enabled: true,
 		requireEmailVerification: true,
-		sendResetPassword: async ({ user, url }, request) => {
+		sendResetPassword: async ({ user, url }) => {
 			const resend = new (await import('resend')).Resend(env.RESEND_API_KEY);
 			await resend.emails.send({
 				from: 'Gbookminton <noreply@Gbookminton.com>',
@@ -39,7 +41,7 @@ export const auth = betterAuth({
 	},
 	emailVerification: {
 		sendOnSignUp: true,
-		sendVerificationEmail: async ({ user, url, token }, request) => {
+		sendVerificationEmail: async ({ user, url }) => {
 			const resend = new (await import('resend')).Resend(env.RESEND_API_KEY);
 			await resend.emails.send({
 				from: 'Gbookminton <noreply@Gbookminton.com>',

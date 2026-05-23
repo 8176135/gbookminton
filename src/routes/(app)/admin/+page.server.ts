@@ -1,7 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { event, eventSignup } from '$lib/server/db/schema';
-import { asc, eq, lt, sql } from 'drizzle-orm';
+import { asc, sql } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 
 export const load = (async ({ locals, url }) => {

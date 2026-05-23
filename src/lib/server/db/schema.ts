@@ -15,7 +15,9 @@ export const user = sqliteTable('user', {
 	role: text('role').notNull().default('user'), // enum values: user, admin
 	accountType: text('accountType').notNull().default('plusone'), // enum values: company, plusone
 	adminDeadlineDays: integer('adminDeadlineDays').notNull().default(2),
-	adminDeadlineTime: text('adminDeadlineTime').notNull().default('17:00')
+	adminDeadlineTime: text('adminDeadlineTime').notNull().default('17:00'),
+	invitedById: text('invitedById').references((): any => user.id),
+	allowedPlusOnes: integer('allowedPlusOnes').notNull().default(1)
 });
 
 export const session = sqliteTable('session', {
@@ -84,7 +86,8 @@ export const eventSignup = sqliteTable('eventSignup', {
 		.notNull()
 		.references(() => event.id),
 	status: text('status').notNull(), // enum values: listed, waitlist, locked, withdrawn, removed
-	createdAt: integer('createdAt', { mode: 'timestamp' }).notNull()
+	createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
+	paidById: text('paidById').references(() => user.id)
 });
 
 export const transaction = sqliteTable('transaction', {

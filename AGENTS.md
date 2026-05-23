@@ -1,5 +1,8 @@
 # Repository Guidelines
 
+> [!IMPORTANT]
+> **AGENTS DIRECTIVE**: AI coding agents MUST keep this document (`AGENTS.md`) strictly up-to-date after making any significant changes to the repository, including adding new components, routes, database tables, modules, utility scripts, or changing APIs/configurations.
+
 **Project**: Gbookminton  
 **Type**: SvelteKit 5 Application (Bun + SQLite)  
 **Purpose**: Premium membership and tournament management for badminton/pickleball groups
@@ -228,6 +231,45 @@ bun run migrate       # Run migrations
 bun run prepare       # Runs svelte-kit sync
 ```
 
+### Utility Scripts
+
+Several helper scripts are available under `scripts/` to assist with database setup, user administration, and testing:
+
+#### Reset User Password (`scripts/reset-password.ts`)
+
+Resets or overrides the password of any user locally. Supports interactive selection or command-line arguments:
+
+```bash
+# Interactive mode
+bun run reset-password
+
+# Command-line arguments mode
+bun run reset-password <email> <new-password>
+```
+
+#### Generate Test Events (`scripts/generate-test-events.ts`)
+
+Populates the database with test events across different time categories (past, currently happening, upcoming) to help test UI and deadlines:
+
+```bash
+# Interactive mode
+bun scripts/generate-test-events.ts
+
+# Specify events per category
+bun scripts/generate-test-events.ts --count 5
+
+# Dry-run mode (prints SQL only, does not write to database)
+bun scripts/generate-test-events.ts --dry-run
+```
+
+#### Migrate Event Visibility (`scripts/migrate-visibility.ts`)
+
+Handles the migration of the database schema mapping the old `isPrivate` column in the `event` table to the new `visibility` field:
+
+```bash
+bun scripts/migrate-visibility.ts
+```
+
 **Required Runtime**: Bun (not Node.js)
 
 ---
@@ -362,7 +404,25 @@ export const actions = {
 
 - **Runtime**: Bun (required, not Node.js)
 - **Package Manager**: pnpm (based on pnpm-lock.yaml presence)
-- **Dev Shell**: Nix via `devenv.yaml` (optional but recommended)
+- **Dev Shell**: Nix via `devenv.yaml` / `devenv.nix` (recommended)
+
+#### Nix / Devenv Setup on NixOS
+
+This repository is pre-configured with `devenv` and `direnv` to provide a complete, reproducible environment with Bun, pnpm, Python, GCC, SQLite, and more.
+
+- **For Developers (with direnv)**:
+  Once `direnv` is allowed (`direnv allow`), entering the directory will automatically load the correct versions of all tools into your shell.
+- **For AI Agents / Non-Interactive Shells**:
+  Standard non-interactive terminals (such as those used by AI agents or CI/CD) do not load `direnv` by default. Use either of the following patterns to run commands:
+  - **One-off commands**: Prefix your command with `devenv shell -- `:
+    ```bash
+    devenv shell -- bun run dev
+    ```
+  - **Persistent terminal sessions**: Run `eval "$(direnv export bash)"` at the start of the session to load the devenv environment into the active shell process:
+    ```bash
+    eval "$(direnv export bash)"
+    bun run dev
+    ```
 
 ### VSCode Extensions (recommended)
 

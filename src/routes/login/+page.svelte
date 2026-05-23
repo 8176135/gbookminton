@@ -12,7 +12,7 @@
 		loading = true;
 		errorMsg = '';
 		try {
-			const { data, error } = await authClient.signIn.email({
+			const { error } = await authClient.signIn.email({
 				email: email.trim(),
 				password
 			});

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { authClient } from '$lib/auth-client';
 	import { goto } from '$app/navigation';
-	import { page } from '$app/state';
 
 	interface Props {
 		data: { token: string };

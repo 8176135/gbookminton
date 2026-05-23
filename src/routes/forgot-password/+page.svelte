@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { authClient } from '$lib/auth-client';
-	import { goto } from '$app/navigation';
 
 	let email = $state('');
 	let loading = $state(false);
@@ -13,7 +12,7 @@
 		errorMsg = '';
 		successMsg = '';
 		try {
-			const { data, error } = await authClient.requestPasswordReset({
+			const { error } = await authClient.requestPasswordReset({
 				email: email.trim(),
 				redirectTo: '/reset-password'
 			});

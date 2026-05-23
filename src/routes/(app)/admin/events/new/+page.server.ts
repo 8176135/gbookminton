@@ -1,7 +1,6 @@
-import { redirect } from '@sveltejs/kit';
+import { redirect, fail } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { event } from '$lib/server/db/schema';
-import { auth } from '$lib/server/auth';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -9,6 +8,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	// @ts-ignore - Better Auth custom fields (temporary until sync)
 	if (!session || session.user.role !== 'admin') {
 		throw redirect(302, '/dashboard');
+	}
 	return {
 		adminSettings: {
 			days: (session.user as any).adminDeadlineDays ?? 2,
@@ -35,7 +35,21 @@ export const actions: Actions = {
 		const costCompanyDollars = parseFloat(data.get('costCompany') as string);
 		const costPlusOneDollars = parseFloat(data.get('costPlusOne') as string);
 		const deadlineStr = data.get('deadline') as string;
-		const visibility = data.get('visibility') as string || 'onlyCompany';
+		const visibility = (data.get('visibility') as string) || 'onlyCompany';
+
+		if (
+			!title ||
+			!dateStr ||
+			!deadlineStr ||
+			isNaN(duration) ||
+			isNaN(capacity) ||
+			isNaN(costCompanyDollars) ||
+			isNaN(costPlusOneDollars)
+		) {
+			return fail(400, {
+				error: 'Please fill in all fields correctly (including Date and Deadline).'
+			});
+		}
 
 		await db.insert(event).values({
 			id: crypto.randomUUID(),

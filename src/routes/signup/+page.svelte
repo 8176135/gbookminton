@@ -13,7 +13,7 @@
 		loading = true;
 		errorMsg = '';
 		try {
-			const { data, error } = await authClient.signUp.email({
+			const { error } = await authClient.signUp.email({
 				email: email.trim(),
 				password,
 				name: name.trim()
@@ -89,8 +89,11 @@
 					bind:value={email}
 					required
 					class="w-full rounded-2xl border border-white/5 bg-white/5 px-4 py-3.5 text-white transition placeholder:text-gray-600 focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none"
-					placeholder="you@example.com"
+					placeholder="you@company.com"
 				/>
+				<p class="mt-1.5 text-xs text-gray-500">
+					Only company email domains are accepted. Plus-one accounts must be invited.
+				</p>
 			</div>
 
 			<div>

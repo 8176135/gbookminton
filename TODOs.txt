@@ -26,4 +26,7 @@ Also replace badge
 Create a expand button on the main dashboard to expand the box to show 
 people already joined
 
+Make the visiblity a 3 option enum. It can be private, onlyCompany, and Public.
+Default to OnlyCompany. As the name implies, it should show who have joined to all company accounts, not plusone accounts.
+
 

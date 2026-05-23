@@ -122,15 +122,21 @@
 						</div>
 						{#if ev.visibility === 'private' && isAdmin}
 							<div class="mt-2">
-								<Badge variant="outline" class="border-yellow-500/30 text-yellow-400">🔒 Private</Badge>
+								<Badge variant="outline" class="border-yellow-500/30 text-yellow-400"
+									>🔒 Private</Badge
+								>
 							</div>
 						{:else if ev.visibility === 'onlyCompany'}
 							<div class="mt-2">
-								<Badge variant="outline" class="border-blue-500/30 text-blue-400">🏢 Company Only</Badge>
+								<Badge variant="outline" class="border-blue-500/30 text-blue-400"
+									>🏢 Company Only</Badge
+								>
 							</div>
 						{:else if ev.visibility === 'public'}
 							<div class="mt-2">
-								<Badge variant="outline" class="border-emerald-500/30 text-emerald-400">🌍 Public</Badge>
+								<Badge variant="outline" class="border-emerald-500/30 text-emerald-400"
+									>🌍 Public</Badge
+								>
 							</div>
 						{/if}
 						{#if ev.isLocked}
@@ -270,7 +276,7 @@
 							{userSignupStatus}
 						</Badge>
 						{#if userSignupStatus === 'waitlist' && currentUser && currentUser.balance < (currentUser.accountType === 'company' ? ev.costCompany : ev.costPlusOne)}
-						<Badge variant="destructive" class="ml-2">Needs Funds to be Promoted</Badge>
+							<Badge variant="destructive" class="ml-2">Needs Funds to be Promoted</Badge>
 						{/if}
 					</p>
 				</div>

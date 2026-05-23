@@ -1,9 +1,10 @@
 import { redirect, fail } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { event, eventSignup, user } from '$lib/server/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { event, eventSignup, user, companyDomain, account } from '$lib/server/db/schema';
+import { desc, eq, sql } from 'drizzle-orm';
 import { updateUserAccountType } from '$lib/server/account';
 import type { PageServerLoad, Actions } from './$types';
+import { hashPassword } from 'better-auth/crypto';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.session) {
@@ -24,7 +25,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 			shortCode: user.shortCode,
 			createdAt: user.createdAt,
 			adminDeadlineDays: user.adminDeadlineDays,
-			adminDeadlineTime: user.adminDeadlineTime
+			adminDeadlineTime: user.adminDeadlineTime,
+			allowedPlusOnes: user.allowedPlusOnes
 		})
 		.from(user)
 		.where(eq(user.id, locals.session.user.id))
@@ -32,6 +34,22 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	if (!currentUser) {
 		throw redirect(302, '/login');
+	}
+
+	// Get invited plus-ones
+	let invitedPlusOnes: any[] = [];
+	if (currentUser.accountType === 'company' || currentUser.role === 'admin') {
+		invitedPlusOnes = await db
+			.select({
+				id: user.id,
+				name: user.name,
+				email: user.email,
+				balance: user.balance,
+				createdAt: user.createdAt
+			})
+			.from(user)
+			.where(eq(user.invitedById, currentUser.id))
+			.orderBy(desc(user.createdAt));
 	}
 
 	// Get user's event registrations with event details
@@ -63,7 +81,12 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	return {
 		user: currentUser,
-		pastEvents
+		pastEvents,
+		invitedPlusOnes: invitedPlusOnes.map((p) => ({
+			...p,
+			createdAt: p.createdAt.toISOString()
+		})),
+		invitedCount: invitedPlusOnes.length
 	};
 };
 
@@ -88,6 +111,15 @@ export const actions: Actions = {
 
 		const userId = locals.session.user.id;
 
+		// Check if email domain is valid
+		const emailDomain = newEmail.split('@')[1] || '';
+		const domains = await db.select({ domain: companyDomain.domain }).from(companyDomain);
+		const isCompanyDomain = domains.some((d) => d.domain.toLowerCase() === emailDomain);
+
+		if (!isCompanyDomain) {
+			return fail(400, { error: 'Your email address must belong to a registered company domain.' });
+		}
+
 		// Check if email is already in use by another user
 		const existingUser = await db.select().from(user).where(eq(user.email, newEmail)).limit(1);
 
@@ -109,6 +141,122 @@ export const actions: Actions = {
 			message:
 				'Email updated successfully. Your account type has been adjusted based on your new email domain.'
 		};
+	},
+	invitePlusOne: async ({ request, locals }) => {
+		if (!locals.session) {
+			throw redirect(302, '/login');
+		}
+
+		const activeUser = locals.session.user;
+		if (activeUser.accountType !== 'company' && activeUser.role !== 'admin') {
+			return fail(403, { error: 'Only Company accounts and Admin users can invite Plus-Ones.' });
+		}
+
+		const data = await request.formData();
+		const plusOneName = (data.get('name') as string)?.trim();
+		const plusOneEmail = (data.get('email') as string)?.toLowerCase().trim();
+		const passwordInput = data.get('password') as string;
+
+		if (!plusOneName || !plusOneEmail || !passwordInput) {
+			return fail(400, { error: 'All fields are required.' });
+		}
+
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		if (!emailRegex.test(plusOneEmail)) {
+			return fail(400, { error: 'Invalid email format.' });
+		}
+
+		if (passwordInput.length < 8) {
+			return fail(400, { error: 'Password must be at least 8 characters long.' });
+		}
+
+		if (activeUser.role !== 'admin') {
+			const [inviterData] = await db
+				.select({ allowedPlusOnes: user.allowedPlusOnes })
+				.from(user)
+				.where(eq(user.id, activeUser.id))
+				.limit(1);
+
+			const allowedCount = inviterData?.allowedPlusOnes ?? 1;
+
+			const invitedResult = await db
+				.select({ count: sql<number>`count(*)` })
+				.from(user)
+				.where(eq(user.invitedById, activeUser.id));
+
+			const invitedCount = Number(invitedResult[0]?.count ?? 0);
+
+			if (invitedCount >= allowedCount) {
+				return fail(400, {
+					error: `You have reached your limit of invited plus-one accounts (${allowedCount}).`
+				});
+			}
+		}
+
+		const existingUser = await db.select().from(user).where(eq(user.email, plusOneEmail)).limit(1);
+
+		if (existingUser.length > 0) {
+			return fail(400, { error: 'An account with this email address already exists.' });
+		}
+
+		try {
+			const hashedPassword = await hashPassword(passwordInput);
+
+			const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+			let shortCode = '';
+			let isUnique = false;
+			while (!isUnique) {
+				shortCode = '';
+				for (let i = 0; i < 6; i++) {
+					shortCode += chars.charAt(Math.floor(Math.random() * chars.length));
+				}
+				const existingShortCode = await db
+					.select()
+					.from(user)
+					.where(eq(user.shortCode, shortCode))
+					.limit(1);
+				if (existingShortCode.length === 0) {
+					isUnique = true;
+				}
+			}
+
+			const newUserId = crypto.randomUUID();
+
+			await db.transaction(async (tx) => {
+				await tx.insert(user).values({
+					id: newUserId,
+					name: plusOneName,
+					email: plusOneEmail,
+					emailVerified: true,
+					balance: 0,
+					shortCode,
+					role: 'user',
+					accountType: 'plusone',
+					invitedById: activeUser.id,
+					allowedPlusOnes: 1,
+					createdAt: new Date(),
+					updatedAt: new Date()
+				});
+
+				await tx.insert(account).values({
+					id: crypto.randomUUID(),
+					accountId: plusOneEmail,
+					providerId: 'credential',
+					userId: newUserId,
+					password: hashedPassword,
+					createdAt: new Date(),
+					updatedAt: new Date()
+				});
+			});
+
+			return {
+				inviteSuccess: true,
+				message: `Plus-One '${plusOneName}' was invited successfully!`
+			};
+		} catch (err: any) {
+			console.error('Error inviting plusone:', err);
+			return fail(500, { error: 'Failed to complete plus-one invitation.' });
+		}
 	},
 	updateAdminSettings: async ({ request, locals }) => {
 		if (!locals.session || locals.session.user.role !== 'admin') {

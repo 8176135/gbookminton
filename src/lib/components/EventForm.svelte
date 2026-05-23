@@ -6,7 +6,6 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
-	import { Switch } from '$lib/components/ui/switch/index.js';
 	import { Field } from '$lib/components/ui/field/index.js';
 	import { Calendar } from '$lib/components/ui/calendar/index.js';
 	import * as Popover from '$lib/components/ui/popover/index.js';
@@ -88,7 +87,7 @@
 		if (!eventDateValue) return;
 		const days = adminSettings?.days ?? 2;
 		const time = adminSettings?.time ?? '17:00';
-		
+
 		let d = new Date(eventDateValue.year, eventDateValue.month - 1, eventDateValue.day);
 		d.setDate(d.getDate() - days);
 		eventDeadlineValue = new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate());
@@ -261,12 +260,12 @@
 	</div>
 
 	<Field>
-		<div class="flex w-full items-center justify-between mb-1.5">
+		<div class="mb-1.5 flex w-full items-center justify-between">
 			<Label>Withdrawal Deadline</Label>
 			{#if adminSettings}
-				<button 
-					type="button" 
-					class="text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors disabled:opacity-50" 
+				<button
+					type="button"
+					class="text-xs font-semibold text-indigo-400 transition-colors hover:text-indigo-300 disabled:opacity-50"
 					onclick={handleAutosetDeadline}
 					disabled={!eventDateValue}
 				>
@@ -302,7 +301,11 @@
 		<div class="mt-1.5">
 			<Select.Root type="single" name="visibility" bind:value={visibility}>
 				<Select.Trigger class="w-[200px]">
-					{visibility === 'private' ? 'Private' : visibility === 'public' ? 'Public' : 'Only Company'}
+					{visibility === 'private'
+						? 'Private'
+						: visibility === 'public'
+							? 'Public'
+							: 'Only Company'}
 				</Select.Trigger>
 				<Select.Content>
 					<Select.Item value="private" label="Private">Private</Select.Item>

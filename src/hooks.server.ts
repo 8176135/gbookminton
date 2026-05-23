@@ -4,6 +4,8 @@ import { pollUpBankTransactions } from '$lib/server/upbank';
 import { processDeadlines } from '$lib/server/deadline';
 import type { Handle } from '@sveltejs/kit';
 import { building } from '$app/environment';
+import { db } from '$lib/server/db';
+import { companyDomain } from '$lib/server/db/schema';
 
 // Start background poller once (handles HMR reloads in dev properly)
 if (!(globalThis as any).upPollerStarted && !building) {
@@ -20,6 +22,34 @@ if (!(globalThis as any).upPollerStarted && !building) {
 }
 
 export const handle: Handle = async ({ event, resolve }) => {
+	// Intercept and restrict public email signups to company domains only
+	if (event.request.method === 'POST' && event.url.pathname === '/api/auth/sign-up/email') {
+		try {
+			const clone = event.request.clone();
+			const body = await clone.json();
+			const email = (body.email || '').trim().toLowerCase();
+			const emailDomain = email.split('@')[1] || '';
+
+			const domains = await db.select({ domain: companyDomain.domain }).from(companyDomain);
+			const isCompanyDomain = domains.some((d) => d.domain.toLowerCase() === emailDomain);
+
+			if (!isCompanyDomain) {
+				return new Response(
+					JSON.stringify({
+						message:
+							'Registration is restricted to authorized company email domains. Plus-one accounts must be invited by a company user.'
+					}),
+					{
+						status: 400,
+						headers: { 'Content-Type': 'application/json' }
+					}
+				);
+			}
+		} catch (err) {
+			// Let standard handlers handle malformed requests
+		}
+	}
+
 	const session = await auth.api.getSession({
 		headers: event.request.headers
 	});

@@ -1,5 +1,5 @@
 import { db } from './db';
-import { event, eventSignup, user, transaction } from './db/schema';
+import { event, eventSignup, user } from './db/schema';
 import { and, eq, lte } from 'drizzle-orm';
 
 export async function processDeadlines() {
@@ -26,7 +26,7 @@ export async function processDeadlines() {
 
 			await db.transaction(async (tx) => {
 				for (const row of signups) {
-					const { signup, user: u } = row;
+					const { signup } = row;
 
 					if (signup.status === 'listed') {
 						// Lock signup

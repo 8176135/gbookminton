@@ -1,7 +1,7 @@
 import { redirect, fail } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { companyDomain, user } from '$lib/server/db/schema';
-import { eq, like } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -134,8 +134,6 @@ export const actions: Actions = {
 		if (!domainRecord) {
 			return fail(400, { error: 'Domain not found' });
 		}
-
-		const domainToRemove = domainRecord.domain;
 
 		// Delete the domain
 		await db.delete(companyDomain).where(eq(companyDomain.id, domainId));

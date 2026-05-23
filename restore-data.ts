@@ -33,7 +33,9 @@ for (const table of tables) {
 
 		// 4. Do the insert, quoting table names to avoid reserved keyword errors (e.g. transaction)
 		if (commonCols.length > 0) {
-			sqlite.run(`INSERT OR IGNORE INTO "${table}" (${colStr}) SELECT ${colStr} FROM backup."${table}"`);
+			sqlite.run(
+				`INSERT OR IGNORE INTO "${table}" (${colStr}) SELECT ${colStr} FROM backup."${table}"`
+			);
 			console.log(`✅ Restored data for table: ${table} (${commonCols.length} matching columns)`);
 		}
 	} catch (e: any) {

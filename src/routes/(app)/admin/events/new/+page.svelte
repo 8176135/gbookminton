@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import EventForm from '$lib/components/EventForm.svelte';
 	import type { PageProps } from './$types';
 

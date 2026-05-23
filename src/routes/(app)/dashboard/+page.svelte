@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 	import type { PageProps } from './$types';
 	import LocalDate from '$lib/components/LocalDate.svelte';
 	import { Badge } from '$lib/components/ui/badge/index.js';
@@ -17,6 +18,7 @@
 	let canViewAttendeesMap = $derived(data.canViewAttendeesMap);
 
 	let loadingIds = $state<Record<string, boolean>>({});
+	let loadingPlusOneIds = $state<Record<string, boolean>>({});
 	let expandedEvents = $state<Record<string, boolean>>({});
 	let showPastEvents = $state(false);
 
@@ -106,8 +108,6 @@
 				<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
 					{#each currentEvents as ev}
 						{@const enrolled = enrollmentCountMap[ev.id] || 0}
-						{@const status = statusMap[ev.id]}
-						{@const deadlinePassed = new Date(ev.deadline).getTime() < Date.now()}
 
 						<div
 							class="flex flex-col rounded-2xl border border-emerald-800/50 bg-emerald-900/20 p-6 backdrop-blur-xl transition hover:border-emerald-700"
@@ -145,18 +145,30 @@
 							</div>
 
 							{#if canViewAttendeesMap[ev.id]}
-								<div class="mb-4 mt-2 border-t border-emerald-800/30 pt-3">
-									<button 
-										class="flex w-full items-center justify-between text-sm font-medium text-emerald-400/80 hover:text-emerald-300 transition-colors"
-										onclick={() => expandedEvents[ev.id] = !expandedEvents[ev.id]}
+								<div class="mt-2 mb-4 border-t border-emerald-800/30 pt-3">
+									<button
+										class="flex w-full items-center justify-between text-sm font-medium text-emerald-400/80 transition-colors hover:text-emerald-300"
+										onclick={() => (expandedEvents[ev.id] = !expandedEvents[ev.id])}
 									>
 										<span>{expandedEvents[ev.id] ? 'Hide' : 'Show'} Attendees</span>
-										<svg class="h-4 w-4 transition-transform {expandedEvents[ev.id] ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+										<svg
+											class="h-4 w-4 transition-transform {expandedEvents[ev.id]
+												? 'rotate-180'
+												: ''}"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M19 9l-7 7-7-7"
+											/>
 										</svg>
 									</button>
 									{#if expandedEvents[ev.id]}
-										<div class="mt-3 space-y-1.5 max-h-32 overflow-y-auto pr-2">
+										<div class="mt-3 max-h-32 space-y-1.5 overflow-y-auto pr-2">
 											{#each enrolledUsersMap[ev.id] || [] as attendee}
 												<div class="flex items-center justify-between text-sm">
 													<span class="text-gray-300">{attendee.name}</span>
@@ -166,7 +178,7 @@
 												</div>
 											{/each}
 											{#if (enrolledUsersMap[ev.id] || []).length === 0}
-												<p class="text-xs text-muted-foreground italic">No one has joined yet.</p>
+												<p class="text-muted-foreground text-xs italic">No one has joined yet.</p>
 											{/if}
 										</div>
 									{/if}
@@ -240,18 +252,28 @@
 						</div>
 
 						{#if canViewAttendeesMap[ev.id]}
-							<div class="mb-4 mt-2 border-t border-gray-800/50 pt-3">
-								<button 
-									class="flex w-full items-center justify-between text-sm font-medium text-gray-400 hover:text-gray-300 transition-colors"
-									onclick={() => expandedEvents[ev.id] = !expandedEvents[ev.id]}
+							<div class="mt-2 mb-4 border-t border-gray-800/50 pt-3">
+								<button
+									class="flex w-full items-center justify-between text-sm font-medium text-gray-400 transition-colors hover:text-gray-300"
+									onclick={() => (expandedEvents[ev.id] = !expandedEvents[ev.id])}
 								>
 									<span>{expandedEvents[ev.id] ? 'Hide' : 'Show'} Attendees</span>
-									<svg class="h-4 w-4 transition-transform {expandedEvents[ev.id] ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+									<svg
+										class="h-4 w-4 transition-transform {expandedEvents[ev.id] ? 'rotate-180' : ''}"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M19 9l-7 7-7-7"
+										/>
 									</svg>
 								</button>
 								{#if expandedEvents[ev.id]}
-									<div class="mt-3 space-y-1.5 max-h-32 overflow-y-auto pr-2">
+									<div class="mt-3 max-h-32 space-y-1.5 overflow-y-auto pr-2">
 										{#each enrolledUsersMap[ev.id] || [] as attendee}
 											<div class="flex items-center justify-between text-sm">
 												<span class="text-gray-300">{attendee.name}</span>
@@ -261,10 +283,120 @@
 											</div>
 										{/each}
 										{#if (enrolledUsersMap[ev.id] || []).length === 0}
-											<p class="text-xs text-muted-foreground italic">No one has joined yet.</p>
+											<p class="text-muted-foreground text-xs italic">No one has joined yet.</p>
 										{/if}
 									</div>
 								{/if}
+							</div>
+						{/if}
+
+						<!-- Guest Registrations Panel -->
+						{#if data.invitedPlusOnes.length > 0}
+							<div class="mt-4 border-t border-gray-800/60 pt-4">
+								<h4
+									class="font-outfit mb-2 text-xs font-bold tracking-wider text-gray-500 uppercase"
+								>
+									Guest / Plus-One Signups
+								</h4>
+
+								<div class="space-y-2.5">
+									{#each data.invitedPlusOnes as plusOne}
+										{@const plusOneStatus = data.plusOneSignupMap[ev.id]?.[plusOne.id] || null}
+										{@const loadingKey = `${ev.id}-${plusOne.id}`}
+
+										<div
+											class="flex items-center justify-between rounded-xl bg-white/5 p-2.5 transition hover:bg-white/10"
+										>
+											<div class="min-w-0 flex-1 pr-2">
+												<p class="truncate text-sm font-semibold text-white">{plusOne.name}</p>
+												<div class="mt-0.5 flex items-center gap-1.5">
+													{#if plusOneStatus === 'listed'}
+														<Badge
+															variant="outline"
+															class="border-emerald-500/30 px-1.5 py-0 text-[10px] text-emerald-400"
+															>Enrolled</Badge
+														>
+													{:else if plusOneStatus === 'waitlist'}
+														<Badge
+															variant="outline"
+															class="border-yellow-500/30 px-1.5 py-0 text-[10px] text-yellow-400"
+															>Waitlisted</Badge
+														>
+													{:else if plusOneStatus === 'locked'}
+														<Badge variant="secondary" class="px-1.5 py-0 text-[10px]"
+															>Locked In</Badge
+														>
+													{:else if plusOneStatus === 'removed'}
+														<Badge variant="destructive" class="px-1.5 py-0 text-[10px]"
+															>Removed</Badge
+														>
+													{:else}
+														<Badge
+															variant="outline"
+															class="border-gray-700 px-1.5 py-0 text-[10px] text-gray-400"
+															>Not Signed Up</Badge
+														>
+													{/if}
+												</div>
+											</div>
+
+											<div>
+												{#if plusOneStatus === 'listed' || plusOneStatus === 'waitlist'}
+													<form
+														method="POST"
+														action="?/withdraw"
+														use:enhance={() => {
+															loadingPlusOneIds[loadingKey] = true;
+															return async ({ update }) => {
+																loadingPlusOneIds[loadingKey] = false;
+																await invalidateAll();
+																update({ reset: false });
+															};
+														}}
+													>
+														<input type="hidden" name="eventId" value={ev.id} />
+														<input type="hidden" name="targetUserId" value={plusOne.id} />
+														<button
+															type="submit"
+															disabled={deadlinePassed || loadingPlusOneIds[loadingKey]}
+															class="text-xs font-semibold text-rose-400 transition hover:text-rose-300 disabled:opacity-50"
+														>
+															{loadingPlusOneIds[loadingKey] ? 'Wait...' : 'Withdraw'}
+														</button>
+													</form>
+												{:else if !plusOneStatus || plusOneStatus === 'withdrawn' || plusOneStatus === 'removed'}
+													<form
+														method="POST"
+														action="?/signup"
+														use:enhance={() => {
+															loadingPlusOneIds[loadingKey] = true;
+															return async ({ update }) => {
+																loadingPlusOneIds[loadingKey] = false;
+																await invalidateAll();
+																update({ reset: false });
+															};
+														}}
+													>
+														<input type="hidden" name="eventId" value={ev.id} />
+														<input type="hidden" name="targetUserId" value={plusOne.id} />
+
+														<button
+															type="submit"
+															disabled={deadlinePassed || loadingPlusOneIds[loadingKey]}
+															class="flex items-center gap-0.5 text-xs font-bold text-indigo-400 transition hover:text-indigo-300 disabled:opacity-50"
+														>
+															{#if loadingPlusOneIds[loadingKey]}
+																Signing Up...
+															{:else}
+																Sign Up Guest (${(ev.costPlusOne / 100).toFixed(2)})
+															{/if}
+														</button>
+													</form>
+												{/if}
+											</div>
+										</div>
+									{/each}
+								</div>
 							</div>
 						{/if}
 
@@ -279,7 +411,10 @@
 										{status === 'listed' ? 'Enrolled' : 'Waitlisted'}
 									</Badge>
 									{#if status === 'waitlist' && user.balance < (user.accountType === 'company' ? ev.costCompany : ev.costPlusOne)}
-										<span class="text-xs font-medium text-red-400" title="Insufficient funds for promotion">
+										<span
+											class="text-xs font-medium text-red-400"
+											title="Insufficient funds for promotion"
+										>
 											⚠️ Needs funds
 										</span>
 									{/if}
@@ -376,8 +511,6 @@
 					<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
 						{#each pastEvents as ev}
 							{@const enrolled = enrollmentCountMap[ev.id] || 0}
-							{@const status = statusMap[ev.id]}
-							{@const isFull = enrolled >= ev.capacity}
 
 							<div
 								class="flex flex-col rounded-2xl border border-gray-800/50 bg-gray-900/30 p-6 opacity-75 backdrop-blur-xl transition hover:border-gray-700 hover:opacity-100"
@@ -410,18 +543,30 @@
 								</div>
 
 								{#if canViewAttendeesMap[ev.id]}
-									<div class="mb-4 mt-2 border-t border-gray-800/50 pt-3">
-										<button 
-											class="flex w-full items-center justify-between text-sm font-medium text-gray-400 hover:text-gray-300 transition-colors"
-											onclick={() => expandedEvents[ev.id] = !expandedEvents[ev.id]}
+									<div class="mt-2 mb-4 border-t border-gray-800/50 pt-3">
+										<button
+											class="flex w-full items-center justify-between text-sm font-medium text-gray-400 transition-colors hover:text-gray-300"
+											onclick={() => (expandedEvents[ev.id] = !expandedEvents[ev.id])}
 										>
 											<span>{expandedEvents[ev.id] ? 'Hide' : 'Show'} Attendees</span>
-											<svg class="h-4 w-4 transition-transform {expandedEvents[ev.id] ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+											<svg
+												class="h-4 w-4 transition-transform {expandedEvents[ev.id]
+													? 'rotate-180'
+													: ''}"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													d="M19 9l-7 7-7-7"
+												/>
 											</svg>
 										</button>
 										{#if expandedEvents[ev.id]}
-											<div class="mt-3 space-y-1.5 max-h-32 overflow-y-auto pr-2">
+											<div class="mt-3 max-h-32 space-y-1.5 overflow-y-auto pr-2">
 												{#each enrolledUsersMap[ev.id] || [] as attendee}
 													<div class="flex items-center justify-between text-sm">
 														<span class="text-gray-300">{attendee.name}</span>
@@ -431,7 +576,7 @@
 													</div>
 												{/each}
 												{#if (enrolledUsersMap[ev.id] || []).length === 0}
-													<p class="text-xs text-muted-foreground italic">No one has joined yet.</p>
+													<p class="text-muted-foreground text-xs italic">No one has joined yet.</p>
 												{/if}
 											</div>
 										{/if}

@@ -1,7 +1,7 @@
 import { redirect, fail } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { event, eventSignup, user } from '$lib/server/db/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load = (async ({ locals, params }) => {
@@ -68,10 +68,12 @@ export const load = (async ({ locals, params }) => {
 		userSignupStatus:
 			signups.find((s) => s.signup.userId === session.user.id)?.signup.status ?? null,
 		currentUser: { balance: currentUser.balance, accountType: currentUser.accountType },
-		adminSettings: isAdmin ? {
-			days: (session.user as any).adminDeadlineDays ?? 2,
-			time: (session.user as any).adminDeadlineTime ?? '17:00'
-		} : undefined
+		adminSettings: isAdmin
+			? {
+					days: (session.user as any).adminDeadlineDays ?? 2,
+					time: (session.user as any).adminDeadlineTime ?? '17:00'
+				}
+			: undefined
 	};
 }) satisfies PageServerLoad;
 
@@ -95,7 +97,7 @@ export const actions: Actions = {
 		const costCompanyDollars = parseFloat(data.get('costCompany') as string);
 		const costPlusOneDollars = parseFloat(data.get('costPlusOne') as string);
 		const deadlineStr = data.get('deadline') as string;
-		const visibility = data.get('visibility') as string || 'onlyCompany';
+		const visibility = (data.get('visibility') as string) || 'onlyCompany';
 
 		if (
 			!title ||

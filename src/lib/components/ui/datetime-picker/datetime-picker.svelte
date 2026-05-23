@@ -3,7 +3,6 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { cn } from '$lib/utils.js';
-	import { CalendarDate } from '@internationalized/date';
 
 	type Props = {
 		value?: Date | null;
