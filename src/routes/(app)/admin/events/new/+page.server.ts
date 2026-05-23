@@ -1,19 +1,44 @@
 import { redirect, fail } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { event } from '$lib/server/db/schema';
+import { eq, desc } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
 	const session = locals.session;
 	// @ts-ignore - Better Auth custom fields (temporary until sync)
 	if (!session || session.user.role !== 'admin') {
 		throw redirect(302, '/dashboard');
 	}
+
+	const templateId = url.searchParams.get('templateId');
+	let templateEvent: any = null;
+	if (templateId) {
+		const [found] = await db.select().from(event).where(eq(event.id, templateId)).limit(1);
+		if (found) {
+			const adjustedDate = new Date(found.date);
+			adjustedDate.setDate(adjustedDate.getDate() + 7);
+
+			const adjustedDeadline = new Date(found.deadline);
+			adjustedDeadline.setDate(adjustedDeadline.getDate() + 7);
+
+			templateEvent = {
+				...found,
+				date: adjustedDate,
+				deadline: adjustedDeadline
+			};
+		}
+	}
+
+	const allEvents = await db.select().from(event).orderBy(desc(event.date));
+
 	return {
 		adminSettings: {
 			days: (session.user as any).adminDeadlineDays ?? 2,
 			time: (session.user as any).adminDeadlineTime ?? '17:00'
-		}
+		},
+		events: allEvents,
+		templateEvent
 	};
 };
 

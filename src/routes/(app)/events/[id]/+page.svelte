@@ -149,7 +149,12 @@
 						{/if}
 					</div>
 					{#if isAdmin}
-						<Button onclick={() => (editing = true)}>Edit Event</Button>
+						<div class="flex gap-2">
+							<Button href="/admin/events/new?templateId={ev.id}" variant="outline"
+								>Duplicate</Button
+							>
+							<Button onclick={() => (editing = true)}>Edit Event</Button>
+						</div>
 					{/if}
 				</div>
 			{/if}

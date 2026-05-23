@@ -11,7 +11,8 @@ export enum EventSignupStatus {
 export enum TransactionType {
 	BankDeposit = 'bank_deposit',
 	SignupDeduction = 'signup_deduction',
-	WithdrawRefund = 'withdraw_refund'
+	WithdrawRefund = 'withdraw_refund',
+	ManualAdjustment = 'manual_adjustment'
 }
 
 // User role values

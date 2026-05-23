@@ -16,7 +16,8 @@
 		"db:studio": "drizzle-kit studio",
 		"db:generate": "drizzle-kit generate",
 		"migrate": "drizzle-kit migrate",
-		"reset-password": "bun scripts/reset-password.ts"
+		"reset-password": "bun scripts/reset-password.ts",
+		"add-funds": "bun scripts/add-funds.ts"
 	},
 	"devDependencies": {
 		"@internationalized/date": "^3.12.0",

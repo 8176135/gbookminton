@@ -105,7 +105,7 @@ All database tables defined here via Drizzle:
 - `session`, `account`, `verification` — BetterAuth tables
 - `event` — Tournament/event definitions with dual pricing (`costCompany`, `costPlusOne`)
 - `eventSignup` — User-to-event mapping with status (enum values: listed/waitlist/locked/withdrawn/removed)
-- `transaction` — Balance change ledger (enum values: deposit/deduction)
+- `transaction` — Balance change ledger with custom fields (`notes` for description/messages, `eventSignupId` linking to the event signup record, and `originalTransactionId` for refunds)
 - `companyDomain` — Configurable email domains for auto-classifying users as Company type
 
 ### Shared Types (`src/lib/types.ts`)
@@ -122,8 +122,10 @@ export enum EventSignupStatus {
 }
 
 export enum TransactionType {
-	Deposit = 'deposit',
-	Deduction = 'deduction'
+	BankDeposit = 'bank_deposit',
+	SignupDeduction = 'signup_deduction',
+	WithdrawRefund = 'withdraw_refund',
+	ManualAdjustment = 'manual_adjustment'
 }
 
 export enum UserRole {
@@ -268,6 +270,18 @@ Handles the migration of the database schema mapping the old `isPrivate` column 
 
 ```bash
 bun scripts/migrate-visibility.ts
+```
+
+#### Credit User Balance (`scripts/add-funds.ts`)
+
+Manually credits a user's account balance, inserting an audited transaction. Supports interactive selection or command-line arguments:
+
+```bash
+# Interactive mode
+bun run add-funds
+
+# Command-line arguments mode
+bun run add-funds <email> <amount_in_dollars> [custom_notes]
 ```
 
 **Required Runtime**: Bun (not Node.js)
@@ -468,6 +482,14 @@ Event details (`/events/[id]`) show different information based on:
 - User authentication status
 - User role (admin vs regular user)
 - Event visibility settings
+
+### Event Templates & Duplication
+
+Admin users can build new events based on existing ones:
+
+- **Template Selection**: On the create event screen (`/admin/events/new`), admins can select any past or current event from a dropdown. This reloads the page with `?templateId=<id>` to pre-populate all event settings (title, duration, capacity, pricing, description, visibility, and location).
+- **Duplication**: On the event details screen (`/events/[id]`), admin users are presented with a "Duplicate" button next to "Edit Event" which redirects directly to the create screen pre-populated with that event's details.
+- **Date Shifting**: The template's date and withdrawal deadline are automatically shifted forward by **exactly +1 week (+7 days)** by default to streamline scheduling weekly recurring matches.
 
 ### Balance-Based Access Control
 

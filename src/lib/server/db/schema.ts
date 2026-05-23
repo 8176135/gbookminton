@@ -90,15 +90,17 @@ export const eventSignup = sqliteTable('eventSignup', {
 	paidById: text('paidById').references(() => user.id)
 });
 
-export const transaction = sqliteTable('transaction', {
+export const balanceTransaction = sqliteTable('balanceTransaction', {
 	id: text('id').primaryKey(),
 	userId: text('userId')
 		.notNull()
 		.references(() => user.id),
 	amount: integer('amount').notNull(), // positive for deposit, negative for deduction
 	reference: text('reference').notNull(), // up bank reference or event id
-	type: text('type').notNull(), // enum values: bank_deposit, signup_deduction, withdraw_refund
+	type: text('type').notNull(), // enum values: bank_deposit, signup_deduction, withdraw_refund, manual_adjustment
 	originalTransactionId: text('originalTransactionId'),
+	notes: text('notes'),
+	eventSignupId: text('eventSignupId').references(() => eventSignup.id),
 	date: integer('date', { mode: 'timestamp' }).notNull()
 });
 

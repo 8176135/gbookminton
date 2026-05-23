@@ -1,5 +1,5 @@
 import { db } from './db';
-import { user, transaction } from './db/schema';
+import { user, balanceTransaction } from './db/schema';
 import { env } from '$env/dynamic/private';
 import { desc, eq } from 'drizzle-orm';
 
@@ -14,7 +14,11 @@ export async function pollUpBankTransactions() {
 
 	try {
 		// 1. Get the date of our latest processed transaction to use as `since`
-		const [latestTx] = await db.select().from(transaction).orderBy(desc(transaction.date)).limit(1);
+		const [latestTx] = await db
+			.select()
+			.from(balanceTransaction)
+			.orderBy(desc(balanceTransaction.date))
+			.limit(1);
 
 		let url = 'https://api.up.com.au/api/v1/transactions?filter[status]=SETTLED';
 		if (latestTx) {
@@ -59,8 +63,8 @@ export async function pollUpBankTransactions() {
 				// Check if we already processed this transaction id
 				const [existingTx] = await db
 					.select()
-					.from(transaction)
-					.where(eq(transaction.reference, txId))
+					.from(balanceTransaction)
+					.where(eq(balanceTransaction.reference, txId))
 					.limit(1);
 				if (existingTx) continue;
 
@@ -80,12 +84,13 @@ export async function pollUpBankTransactions() {
 
 						await db.transaction(async (tx) => {
 							// Insert Audit Record
-							await tx.insert(transaction).values({
+							await tx.insert(balanceTransaction).values({
 								id: crypto.randomUUID(),
 								userId: matchedUser.id,
 								amount: amount,
 								reference: txId,
 								type: 'bank_deposit',
+								notes: `Up Bank Deposit: ${message}`,
 								date: txDate
 							});
 

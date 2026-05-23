@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { event, eventSignup, user, transaction } from '$lib/server/db/schema';
+import { event, eventSignup, user, balanceTransaction } from '$lib/server/db/schema';
 import { and, desc, eq, sql, inArray } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -215,14 +215,17 @@ export const actions: Actions = {
 			};
 		}
 
+		let signupId: string;
 		if (existing) {
+			signupId = existing.id;
 			await db
 				.update(eventSignup)
 				.set({ status, paidById: isSponsored ? currentUser.id : null, createdAt: new Date() })
 				.where(eq(eventSignup.id, existing.id));
 		} else {
+			signupId = crypto.randomUUID();
 			await db.insert(eventSignup).values({
-				id: crypto.randomUUID(),
+				id: signupId,
 				userId: targetUser.id,
 				eventId,
 				status,
@@ -237,12 +240,16 @@ export const actions: Actions = {
 				.set({ balance: currentUser.balance - cost, updatedAt: new Date() })
 				.where(eq(user.id, currentUser.id));
 
-			await db.insert(transaction).values({
+			await db.insert(balanceTransaction).values({
 				id: crypto.randomUUID(),
 				userId: currentUser.id,
 				amount: -cost,
 				reference: eventId,
+				eventSignupId: signupId,
 				type: 'signup_deduction',
+				notes: isSponsored
+					? `Event signup (Sponsored: ${targetUser.name}): ${ev.title}`
+					: `Event signup: ${ev.title}`,
 				date: new Date()
 			});
 		}
@@ -296,18 +303,30 @@ export const actions: Actions = {
 		const wasListed = signup.status === 'listed';
 		const payerId = signup.paidById ?? signup.userId;
 
+		let playerName = session.user.name;
+		if (playerId !== session.user.id) {
+			const [invitedGuest] = await db
+				.select()
+				.from(user)
+				.where(and(eq(user.id, playerId), eq(user.invitedById, session.user.id)))
+				.limit(1);
+			if (invitedGuest) {
+				playerName = invitedGuest.name;
+			}
+		}
+
 		if (wasListed) {
 			const [originalTx] = await db
 				.select()
-				.from(transaction)
+				.from(balanceTransaction)
 				.where(
 					and(
-						eq(transaction.userId, payerId),
-						eq(transaction.reference, eventId),
-						eq(transaction.type, 'signup_deduction')
+						eq(balanceTransaction.userId, payerId),
+						eq(balanceTransaction.reference, eventId),
+						eq(balanceTransaction.type, 'signup_deduction')
 					)
 				)
-				.orderBy(desc(transaction.date))
+				.orderBy(desc(balanceTransaction.date))
 				.limit(1);
 
 			if (originalTx) {
@@ -319,13 +338,18 @@ export const actions: Actions = {
 					.set({ balance: payer.balance + refundAmount, updatedAt: new Date() })
 					.where(eq(user.id, payerId));
 
-				await db.insert(transaction).values({
+				await db.insert(balanceTransaction).values({
 					id: crypto.randomUUID(),
 					userId: payerId,
 					amount: refundAmount,
 					reference: eventId,
+					eventSignupId: signup.id,
 					type: 'withdraw_refund',
 					originalTransactionId: originalTx.id,
+					notes:
+						payerId !== playerId
+							? `Withdrawal refund (Sponsored: ${playerName}): ${ev.title}`
+							: `Withdrawal refund: ${ev.title}`,
 					date: new Date()
 				});
 			}
@@ -368,12 +392,16 @@ export const actions: Actions = {
 							.set({ balance: wlPayer.balance - cost, updatedAt: new Date() })
 							.where(eq(user.id, wlPayerId));
 
-						await db.insert(transaction).values({
+						await db.insert(balanceTransaction).values({
 							id: crypto.randomUUID(),
 							userId: wlPayerId,
 							amount: -cost,
 							reference: eventId,
+							eventSignupId: wlSignup.id,
 							type: 'signup_deduction',
+							notes: wlSignup.paidById
+								? `Event signup (Sponsored: ${wlUser.name}): ${ev.title}`
+								: `Event signup: ${ev.title}`,
 							date: new Date()
 						});
 					}
