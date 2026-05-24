@@ -1,11 +1,14 @@
 <script lang="ts">
 	import { authClient } from '$lib/auth-client';
 	import { goto, invalidateAll } from '$app/navigation';
+	import { page } from '$app/state';
 
 	let email = $state('');
 	let password = $state('');
 	let loading = $state(false);
 	let errorMsg = $state('');
+
+	const isVerified = $derived(page.url.searchParams.get('verified') === 'true');
 
 	const handleLogin = async (e: Event) => {
 		e.preventDefault();
@@ -49,6 +52,20 @@
 			<h1 class="font-outfit text-4xl font-bold tracking-tight text-white">Welcome Back</h1>
 			<p class="mt-2 text-sm text-gray-400">Sign in to check your balance and bookings.</p>
 		</div>
+
+		{#if isVerified}
+			<div
+				class="mb-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-center text-sm text-emerald-400 animate-fade-in flex flex-col items-center gap-1.5"
+			>
+				<div class="flex items-center gap-2 font-semibold">
+					<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-5 w-5">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+					</svg>
+					Email Verified!
+				</div>
+				<p class="text-xs text-emerald-400/80">Your email has been successfully verified. You can now log in below.</p>
+			</div>
+		{/if}
 
 		{#if errorMsg}
 			<div
@@ -115,3 +132,20 @@
 		</p>
 	</div>
 </div>
+
+<style>
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+			transform: scale(0.98) translateY(2px);
+		}
+		to {
+			opacity: 1;
+			transform: scale(1) translateY(0);
+		}
+	}
+
+	.animate-fade-in {
+		animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+	}
+</style>

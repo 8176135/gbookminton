@@ -108,44 +108,46 @@ Ensure you have the following environment variables in your `.env`:
 
 ## 🐳 Docker Deployment
 
-Gbookminton is containerized using a multi-stage Docker build optimized for SvelteKit, Bun, and SQLite. For maximum developer convenience, we have included high-level `bun run` utility scripts to orchestrate building, launching, and managing the container locally.
+Gbookminton is containerized using a multi-stage Docker build optimized for SvelteKit, Bun, and SQLite, running under a highly locked-down Docker Compose architecture. 
+
+The container is hardened with state-of-the-art security settings:
+* **Non-Root User Execution**: Runs as user `1000:1000` (matching the `bun` user in the container and the default UID on host platforms) to ensure secure file permissions and eliminate host-escalation vulnerabilities.
+* **Read-Only Root Filesystem**: The container OS filesystem is mounted as read-only (`read_only: true`), preventing any malicious runtime modifications to SvelteKit or server binaries.
+* **Dropped Capabilities**: Drops all default Linux kernel privileges (`cap_drop: [ALL]`) since no root-level functions are required.
+* **Privilege Escalation Blocked**: Prevents child processes from obtaining new privileges (`security_opt: [no-new-privileges:true]`).
+* **Resource Constraints**: Limits CPU and memory consumption to prevent DoS exploits.
 
 ### 🚀 Easiest Way: Single Command Up
 
-To automatically build the image, stop any existing container, and boot up a new instance configured with your `.env` variables:
-
+To automatically build the image, configure container security constraints, load environmental variables from `.env`, and start the application in detached mode:
 ```bash
 bun run docker:up
 ```
 
 ---
 
-### Alternative: Step-by-Step Orchestration
+### Step-by-Step Commands
 
 If you prefer to run commands individually, you can use the following scripts:
 
-#### 1. Build the Docker Image
-
+#### 1. Build the Container Image
 ```bash
 bun run docker:build
-# Or raw command: docker build -t gbookminton .
+# Or raw command: docker compose build
 ```
 
-#### 2. Run the Container
-
-This launches the container, automatically injecting environmental configurations from your `.env` file using Docker's `--env-file` feature, and binds the data directory for SQLite persistence.
-
+#### 2. Run the Container (Detached)
+This launches the container using the security profiles defined in `docker-compose.yml`, binds the local `./data` directory for SQLite persistence, and loads `.env` variables.
 ```bash
 bun run docker:run
-# Or raw command:
-# docker run -d -p 3000:3000 --env-file .env -v $(pwd)/data:/app/data --name gbookminton gbookminton
+# Or raw command: docker compose up -d
 ```
 
 #### 3. Stop and Remove the Container
-
+This gracefully shuts down the container, stops the server, and cleans up temporary resources.
 ```bash
 bun run docker:stop
-# Or raw command: docker stop gbookminton || true && docker rm gbookminton || true
+# Or raw command: docker compose down
 ```
 
 ### 3. Database Migrations
@@ -154,7 +156,7 @@ Database migrations are executed **automatically on startup** inside the contain
 
 ### 4. Configuration Variables
 
-The following environment variables can be customized:
+The following environment variables can be customized in your `.env` file:
 
 | Variable              | Default Value        | Description                                                       |
 | --------------------- | -------------------- | ----------------------------------------------------------------- |

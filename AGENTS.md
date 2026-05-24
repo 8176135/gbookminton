@@ -109,6 +109,7 @@ All database tables defined here via Drizzle:
 - `eventSignup` — User-to-event mapping with status (enum values: listed/waitlist/locked/withdrawn/removed)
 - `transaction` — Balance change ledger with custom fields (`notes` for description/messages, `eventSignupId` linking to the event signup record, and `originalTransactionId` for refunds)
 - `companyDomain` — Configurable email domains for auto-classifying users as Company type
+- `changelog` — Audit log of insertions, updates, and deletions on important tables (like `user` and `event`) automatically populated via native SQLite triggers
 
 ### Shared Types (`src/lib/types.ts`)
 
@@ -159,10 +160,14 @@ Helper functions for account type management:
 
 ### Background Services (`src/hooks.server.ts`)
 
-Two `setInterval`-based background services initialized at startup:
+Three `setInterval`-based background services initialized at startup:
 
 1. **Up Bank Polling** (`src/lib/server/upbank.ts`) — Checks for deposits, matches shortcodes
 2. **Deadline Processor** (`src/lib/server/deadline.ts`) — Processes event deadlines, deducts balances
+3. **Daily Backup Snapshots** (`src/lib/server/snapshot.ts`) — Performs safe, hot SQLite database snapshots (configurable interval, skips identical copies via hash comparison)
+
+**Graceful Shutdown**:
+Registers `SIGINT` and `SIGTERM` OS signal handlers. On shutdown, it immediately sets a flag to reject any new incoming requests with a `503 Service Unavailable` status, clears background intervals, and tracks active requests via SvelteKit's `handle` hook. It awaits their completion with a 5-second timeout, exiting with code `0` on success or code `1` if forced to kill active connections.
 
 ### Shared Components (`src/lib/components/`)
 
@@ -468,25 +473,33 @@ Required variables (typically in `.env`):
 
 Gbookminton is containerized using a highly optimized, two-stage Docker architecture:
 - **Build Stage**: Uses `oven/bun:1` to download dependencies and run the production build (`bun --bun run build`).
-- **Run Stage**: Uses `oven/bun:1-slim` for minimal size. Database path is defaulted to `/app/data/local.db` for mounting volumes.
+- **Run Stage**: Uses `oven/bun:1-slim` for minimal size. Runs strictly under the non-root `bun` user (UID/GID 1000) for security.
 - **Entrypoint**: Runs migrations automatically (`bun src/migrate.ts`) on startup before launching SvelteKit (`exec bun build/index.js`).
+
+### Docker Compose & Security Hardening (`docker-compose.yml`)
+
+The application is deployed using Docker Compose with extensive production security constraints:
+* **Signal Forwarding (Init)**: Configured with `init: true` to run Docker's built-in `tini` as PID 1, ensuring OS signals (`SIGINT`/`SIGTERM`) are correctly propagated to the child Bun server process.
+* **Non-Root Execution**: Runs as user `1000:1000` (matching the host user and container `bun` user) to prevent root escalation and solve SQLite filesystem permission issues.
+* **Read-Only Root Filesystem**: Mounted with `read_only: true` to block any runtime file tampering.
+* **Linux Capabilities Dropped**: Drops all kernel capabilities (`cap_drop: [ALL]`).
+* **No Privilege Escalation**: Restricts binary escalation (`security_opt: [no-new-privileges:true]`).
+* **Writable Tmpfs**: Maps `/tmp` to a temporary in-memory write space for server logging/processing.
+* **Resource Limits**: Caps limits at 1.0 CPU cores and 512MB RAM.
 
 **Container Deployment Commands:**
 ```bash
-# Build the image
-docker build -t gbookminton .
+# Build the image via Compose
+bun run docker:build  # Or: docker compose build
 
-# Run the container with volume mapping
-docker run -d \
-  -p 3000:3000 \
-  -v $(pwd)/data:/app/data \
-  -e BETTER_AUTH_SECRET="your_production_secret" \
-  -e BETTER_AUTH_URL="https://yourdomain.com" \
-  -e RESEND_API_KEY="re_..." \
-  -e UP_BANK_API_KEY="up:yeah:..." \
-  -e EXPORT_SECRET_TOKEN="your_export_token" \
-  --name gbookminton \
-  gbookminton
+# Start the container detached
+bun run docker:run    # Or: docker compose up -d
+
+# Stop and remove container
+bun run docker:stop   # Or: docker compose down
+
+# Fast Build & Up (Recommended)
+bun run docker:up     # Or: docker compose up -d --build
 ```
 
 ---

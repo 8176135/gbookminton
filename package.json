@@ -18,10 +18,10 @@
 		"migrate": "drizzle-kit migrate",
 		"reset-password": "bun scripts/reset-password.ts",
 		"add-funds": "bun scripts/add-funds.ts",
-		"docker:build": "docker build -t gbookminton .",
-		"docker:run": "docker run -d --env-file .env -p 3000:3000 -v $(pwd)/data:/app/data --name gbookminton gbookminton",
-		"docker:stop": "docker stop gbookminton || true && docker rm gbookminton || true",
-		"docker:up": "bun run docker:build && bun run docker:stop && bun run docker:run"
+		"docker:build": "docker compose build",
+		"docker:run": "docker compose up",
+		"docker:stop": "docker compose down",
+		"docker:up": "docker compose up --build"
 	},
 	"devDependencies": {
 		"@internationalized/date": "^3.12.0",

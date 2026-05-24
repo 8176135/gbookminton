@@ -6,7 +6,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 
-	let { data }: PageProps = $props();
+	let { data, form }: PageProps = $props();
 	let user = $derived(data.user);
 	let currentEvents = $derived(data.currentEvents);
 	let upcomingEvents = $derived(data.upcomingEvents);
@@ -19,6 +19,8 @@
 
 	let loadingIds = $state<Record<string, boolean>>({});
 	let loadingPlusOneIds = $state<Record<string, boolean>>({});
+	let errors = $state<Record<string, string>>({});
+	let guestErrors = $state<Record<string, string>>({});
 	let expandedEvents = $state<Record<string, boolean>>({});
 	let showPastEvents = $state(false);
 
@@ -304,96 +306,112 @@
 										{@const plusOneStatus = data.plusOneSignupMap[ev.id]?.[plusOne.id] || null}
 										{@const loadingKey = `${ev.id}-${plusOne.id}`}
 
-										<div
-											class="flex items-center justify-between rounded-xl bg-white/5 p-2.5 transition hover:bg-white/10"
-										>
-											<div class="min-w-0 flex-1 pr-2">
-												<p class="truncate text-sm font-semibold text-white">{plusOne.name}</p>
-												<div class="mt-0.5 flex items-center gap-1.5">
-													{#if plusOneStatus === 'listed'}
-														<Badge
-															variant="outline"
-															class="border-emerald-500/30 px-1.5 py-0 text-[10px] text-emerald-400"
-															>Enrolled</Badge
+										<div class="flex flex-col gap-2 rounded-xl bg-white/5 p-2.5 transition hover:bg-white/10">
+											<div class="flex items-center justify-between">
+												<div class="min-w-0 flex-1 pr-2">
+													<p class="truncate text-sm font-semibold text-white">{plusOne.name}</p>
+													<div class="mt-0.5 flex items-center gap-1.5">
+														{#if plusOneStatus === 'listed'}
+															<Badge
+																variant="outline"
+																class="border-emerald-500/30 px-1.5 py-0 text-[10px] text-emerald-400"
+																>Enrolled</Badge
+															>
+														{:else if plusOneStatus === 'waitlist'}
+															<Badge
+																variant="outline"
+																class="border-yellow-500/30 px-1.5 py-0 text-[10px] text-yellow-400"
+																>Waitlisted</Badge
+															>
+														{:else if plusOneStatus === 'locked'}
+															<Badge variant="secondary" class="px-1.5 py-0 text-[10px]"
+																>Locked In</Badge
+															>
+														{:else if plusOneStatus === 'removed'}
+															<Badge variant="destructive" class="px-1.5 py-0 text-[10px]"
+																>Removed</Badge
+															>
+														{:else}
+															<Badge
+																variant="outline"
+																class="border-gray-700 px-1.5 py-0 text-[10px] text-gray-400"
+																>Not Signed Up</Badge
+															>
+														{/if}
+													</div>
+												</div>
+
+												<div>
+													{#if plusOneStatus === 'listed' || plusOneStatus === 'waitlist'}
+														<form
+															method="POST"
+															action="?/withdraw"
+															use:enhance={() => {
+																loadingPlusOneIds[loadingKey] = true;
+																return async ({ update }) => {
+																	loadingPlusOneIds[loadingKey] = false;
+																	await invalidateAll();
+																	update({ reset: false });
+																};
+															}}
 														>
-													{:else if plusOneStatus === 'waitlist'}
-														<Badge
-															variant="outline"
-															class="border-yellow-500/30 px-1.5 py-0 text-[10px] text-yellow-400"
-															>Waitlisted</Badge
+															<input type="hidden" name="eventId" value={ev.id} />
+															<input type="hidden" name="targetUserId" value={plusOne.id} />
+															<button
+																type="submit"
+																disabled={deadlinePassed || loadingPlusOneIds[loadingKey]}
+																class="text-xs font-semibold text-rose-400 transition hover:text-rose-300 disabled:opacity-50"
+															>
+																{loadingPlusOneIds[loadingKey] ? 'Wait...' : 'Withdraw'}
+															</button>
+														</form>
+													{:else if !plusOneStatus || plusOneStatus === 'withdrawn' || plusOneStatus === 'removed'}
+														<form
+															method="POST"
+															action="?/signup"
+															use:enhance={() => {
+																loadingPlusOneIds[loadingKey] = true;
+																guestErrors[loadingKey] = '';
+																return async ({ result, update }) => {
+																	loadingPlusOneIds[loadingKey] = false;
+																	if (result.type === 'success' && result.data && 'error' in result.data) {
+																		guestErrors[loadingKey] = result.data.error as string;
+																	} else if (result.type === 'failure' && result.data && 'error' in result.data) {
+																		guestErrors[loadingKey] = result.data.error as string;
+																	} else {
+																		await invalidateAll();
+																		update({ reset: false });
+																	}
+																};
+															}}
 														>
-													{:else if plusOneStatus === 'locked'}
-														<Badge variant="secondary" class="px-1.5 py-0 text-[10px]"
-															>Locked In</Badge
-														>
-													{:else if plusOneStatus === 'removed'}
-														<Badge variant="destructive" class="px-1.5 py-0 text-[10px]"
-															>Removed</Badge
-														>
-													{:else}
-														<Badge
-															variant="outline"
-															class="border-gray-700 px-1.5 py-0 text-[10px] text-gray-400"
-															>Not Signed Up</Badge
-														>
+															<input type="hidden" name="eventId" value={ev.id} />
+															<input type="hidden" name="targetUserId" value={plusOne.id} />
+
+															<button
+																type="submit"
+																disabled={deadlinePassed || loadingPlusOneIds[loadingKey]}
+																class="flex items-center gap-0.5 text-xs font-bold text-indigo-400 transition hover:text-indigo-300 disabled:opacity-50"
+															>
+																{#if loadingPlusOneIds[loadingKey]}
+																	Signing Up...
+																{:else}
+																	Sign Up Guest (${(ev.costPlusOne / 100).toFixed(2)})
+																{/if}
+															</button>
+														</form>
 													{/if}
 												</div>
 											</div>
 
-											<div>
-												{#if plusOneStatus === 'listed' || plusOneStatus === 'waitlist'}
-													<form
-														method="POST"
-														action="?/withdraw"
-														use:enhance={() => {
-															loadingPlusOneIds[loadingKey] = true;
-															return async ({ update }) => {
-																loadingPlusOneIds[loadingKey] = false;
-																await invalidateAll();
-																update({ reset: false });
-															};
-														}}
-													>
-														<input type="hidden" name="eventId" value={ev.id} />
-														<input type="hidden" name="targetUserId" value={plusOne.id} />
-														<button
-															type="submit"
-															disabled={deadlinePassed || loadingPlusOneIds[loadingKey]}
-															class="text-xs font-semibold text-rose-400 transition hover:text-rose-300 disabled:opacity-50"
-														>
-															{loadingPlusOneIds[loadingKey] ? 'Wait...' : 'Withdraw'}
-														</button>
-													</form>
-												{:else if !plusOneStatus || plusOneStatus === 'withdrawn' || plusOneStatus === 'removed'}
-													<form
-														method="POST"
-														action="?/signup"
-														use:enhance={() => {
-															loadingPlusOneIds[loadingKey] = true;
-															return async ({ update }) => {
-																loadingPlusOneIds[loadingKey] = false;
-																await invalidateAll();
-																update({ reset: false });
-															};
-														}}
-													>
-														<input type="hidden" name="eventId" value={ev.id} />
-														<input type="hidden" name="targetUserId" value={plusOne.id} />
-
-														<button
-															type="submit"
-															disabled={deadlinePassed || loadingPlusOneIds[loadingKey]}
-															class="flex items-center gap-0.5 text-xs font-bold text-indigo-400 transition hover:text-indigo-300 disabled:opacity-50"
-														>
-															{#if loadingPlusOneIds[loadingKey]}
-																Signing Up...
-															{:else}
-																Sign Up Guest (${(ev.costPlusOne / 100).toFixed(2)})
-															{/if}
-														</button>
-													</form>
-												{/if}
-											</div>
+											{#if guestErrors[loadingKey]}
+												<div class="rounded-lg border border-red-500/20 bg-red-500/10 p-2.5 text-[11px] text-red-400 font-medium animate-fade-in flex items-start gap-1.5">
+													<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-3.5 w-3.5 shrink-0 text-red-400 mt-0.5">
+														<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12v-.008Z" />
+													</svg>
+													<span>{guestErrors[loadingKey]}</span>
+												</div>
+											{/if}
 										</div>
 									{/each}
 								</div>
@@ -441,35 +459,53 @@
 								</form>
 							{:else}
 								<!-- Not enrolled yet -->
-								<form
-									method="POST"
-									action="?/signup"
-									class="w-full"
-									use:enhance={() => {
-										loadingIds[ev.id] = true;
-										return async ({ update }) => {
-											loadingIds[ev.id] = false;
-											update({ reset: false });
-										};
-									}}
-								>
-									<input type="hidden" name="eventId" value={ev.id} />
-									<Button
-										type="submit"
+								<div class="flex w-full flex-col gap-3.5 animate-fade-in">
+									{#if errors[ev.id]}
+										<div class="rounded-xl border border-red-500/20 bg-red-500/10 p-3.5 text-xs text-red-400 font-medium flex items-start gap-2 shadow-lg shadow-red-950/20">
+											<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4 shrink-0 text-red-400 mt-0.5 animate-bounce-slow">
+												<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12v-.008Z" />
+											</svg>
+											<span>{errors[ev.id]}</span>
+										</div>
+									{/if}
+
+									<form
+										method="POST"
+										action="?/signup"
 										class="w-full"
-										disabled={deadlinePassed || loadingIds[ev.id]}
+										use:enhance={() => {
+											loadingIds[ev.id] = true;
+											errors[ev.id] = '';
+											return async ({ result, update }) => {
+												loadingIds[ev.id] = false;
+												if (result.type === 'success' && result.data && 'error' in result.data) {
+													errors[ev.id] = result.data.error as string;
+												} else if (result.type === 'failure' && result.data && 'error' in result.data) {
+													errors[ev.id] = result.data.error as string;
+												} else {
+													update({ reset: false });
+												}
+											};
+										}}
 									>
-										{#if loadingIds[ev.id]}
-											Processing...
-										{:else if deadlinePassed}
-											Registration Closed
-										{:else if isFull}
-											Join Waitlist
-										{:else}
-											Sign Up
-										{/if}
-									</Button>
-								</form>
+										<input type="hidden" name="eventId" value={ev.id} />
+										<Button
+											type="submit"
+											class="w-full"
+											disabled={deadlinePassed || loadingIds[ev.id]}
+										>
+											{#if loadingIds[ev.id]}
+												Processing...
+											{:else if deadlinePassed}
+												Registration Closed
+											{:else if isFull}
+												Join Waitlist
+											{:else}
+												Sign Up
+											{/if}
+										</Button>
+									</form>
+								</div>
 							{/if}
 						</div>
 					</div>
@@ -599,3 +635,33 @@
 		{/if}
 	</div>
 </div>
+
+<style>
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+			transform: scale(0.97) translateY(4px);
+		}
+		to {
+			opacity: 1;
+			transform: scale(1) translateY(0);
+		}
+	}
+
+	@keyframes bounceSlow {
+		0%, 100% {
+			transform: translateY(0);
+		}
+		50% {
+			transform: translateY(-2px);
+		}
+	}
+
+	.animate-fade-in {
+		animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+	}
+
+	.animate-bounce-slow {
+		animation: bounceSlow 2.5s ease-in-out infinite;
+	}
+</style>

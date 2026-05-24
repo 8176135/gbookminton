@@ -109,3 +109,13 @@ export const companyDomain = sqliteTable('companyDomain', {
 	domain: text('domain').notNull().unique(),
 	createdAt: integer('createdAt', { mode: 'timestamp' }).notNull()
 });
+
+export const changelog = sqliteTable('changelog', {
+	id: text('id').primaryKey(),
+	tableName: text('tableName').notNull(),
+	recordId: text('recordId').notNull(),
+	action: text('action').notNull(), // 'insert', 'update', 'delete'
+	oldData: text('oldData'),
+	newData: text('newData'),
+	timestamp: integer('timestamp', { mode: 'timestamp' }).notNull()
+});

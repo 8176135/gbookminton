@@ -1,7 +1,7 @@
 import { Database } from 'bun:sqlite';
 
 console.log('Patching local.db with missing columns...');
-const sqlite = new Database('local.db');
+const sqlite = new Database('./data/local.db');
 
 const columnsToAdd = [
 	// Updates to the user table

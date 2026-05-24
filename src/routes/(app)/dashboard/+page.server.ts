@@ -156,10 +156,10 @@ export const actions: Actions = {
 		const targetUserId = data.get('targetUserId') as string;
 
 		const [ev] = await db.select().from(event).where(eq(event.id, eventId)).limit(1);
-		if (!ev) return { error: 'Event not found' };
+		if (!ev) return { error: 'Event not found', eventId, targetUserId: targetUserId || null };
 
 		if (new Date(ev.deadline).getTime() < Date.now()) {
-			return { error: 'Registration deadline has passed' };
+			return { error: 'Registration deadline has passed', eventId, targetUserId: targetUserId || null };
 		}
 
 		const [currentUser] = await db.select().from(user).where(eq(user.id, session.user.id)).limit(1);
@@ -175,7 +175,7 @@ export const actions: Actions = {
 				.limit(1);
 
 			if (!invitedGuest) {
-				return { error: 'Invalid guest user' };
+				return { error: 'Invalid guest user', eventId, targetUserId };
 			}
 			targetUser = invitedGuest;
 		}
@@ -187,7 +187,9 @@ export const actions: Actions = {
 			.limit(1);
 		if (existing && existing.status !== 'withdrawn' && existing.status !== 'removed') {
 			return {
-				error: isSponsored ? `${targetUser.name} is already signed up` : 'Already signed up'
+				error: isSponsored ? `${targetUser.name} is already signed up` : 'Already signed up',
+				eventId,
+				targetUserId: targetUserId || null
 			};
 		}
 
@@ -211,7 +213,9 @@ export const actions: Actions = {
 			return {
 				error: isSponsored
 					? `Insufficient funds in your account to secure a spot for ${targetUser.name}`
-					: 'Insufficient funds to secure a spot for this event'
+					: 'Insufficient funds to secure a spot for this event',
+				eventId,
+				targetUserId: targetUserId || null
 			};
 		}
 
@@ -254,7 +258,7 @@ export const actions: Actions = {
 			});
 		}
 
-		return { success: true };
+		return { success: true, eventId, targetUserId: targetUserId || null };
 	},
 
 	withdraw: async ({ request, locals }) => {
@@ -322,11 +326,10 @@ export const actions: Actions = {
 				.where(
 					and(
 						eq(balanceTransaction.userId, payerId),
-						eq(balanceTransaction.reference, eventId),
+						eq(balanceTransaction.eventSignupId, signup.id),
 						eq(balanceTransaction.type, 'signup_deduction')
 					)
 				)
-				.orderBy(desc(balanceTransaction.date))
 				.limit(1);
 
 			if (originalTx) {
