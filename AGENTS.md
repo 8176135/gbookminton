@@ -27,9 +27,9 @@ Gbookminton is a full-stack web application for managing group memberships and t
 
 | Layer     | Technology                            |
 | --------- | ------------------------------------- |
-| Framework | SvelteKit 5 (SSR + client)            |
+| Framework | SvelteKit 5 (SSR + client) via `@sveltejs/adapter-node` |
 | Runtime   | Bun                                   |
-| Database  | SQLite via `bun:sqlite` + Drizzle ORM |
+| Database  | SQLite via `bun:sqlite` + Drizzle ORM (custom path via `DATABASE_PATH`) |
 | Styling   | Tailwind CSS v4                       |
 | Auth      | BetterAuth                            |
 | Build     | Vite                                  |
@@ -77,7 +77,9 @@ src/
 │   │       └── events/    # Event creation
 ├── app.d.ts              # TypeScript declarations (App.Locals)
 ├── app.html              # HTML template
-└── app.css               # Global styles (Tailwind)
+├── app.css               # Global styles (Tailwind)
+├── Dockerfile            # Multi-stage production container build (oven/bun:1-slim)
+└── entrypoint.sh         # Container entrypoint executing auto-migrations & app startup
 ```
 
 ### Data Flow
@@ -231,6 +233,12 @@ bun run migrate       # Run migrations
 
 # Prepare (post-install)
 bun run prepare       # Runs svelte-kit sync
+
+# Docker
+bun run docker:build  # Build Docker container image locally
+bun run docker:run    # Start container mounting ./data and injecting .env files
+bun run docker:stop   # Stops and removes active container
+bun run docker:up     # Sequence command: builds, stops, and starts container
 ```
 
 ### Utility Scripts
@@ -407,8 +415,8 @@ export const actions = {
 ### Entry Points
 
 - **Dev**: `bun run dev` → Vite dev server
-- **Prod**: `bun run build` → SvelteKit build → `node build`
-- **Migrations**: `bun migrate.ts` for database setup
+- **Prod**: `bun run build` → SvelteKit build → standalone server (`build/index.js`) run via `bun build/index.js`
+- **Migrations**: `bun src/migrate.ts` for programmatic database setup
 
 ---
 
@@ -417,7 +425,7 @@ export const actions = {
 ### Environment
 
 - **Runtime**: Bun (required, not Node.js)
-- **Package Manager**: pnpm (based on pnpm-lock.yaml presence)
+- **Package Manager**: Bun (using bun.lock)
 - **Dev Shell**: Nix via `devenv.yaml` / `devenv.nix` (recommended)
 
 #### Nix / Devenv Setup on NixOS
@@ -449,10 +457,37 @@ This repository is pre-configured with `devenv` and `direnv` to provide a comple
 
 Required variables (typically in `.env`):
 
-- `DATABASE_URL` or SQLite file path
-- Up Bank API credentials
-- Resend API key
-- Auth secret
+- `DATABASE_PATH` — Path to SQLite database file (defaults to `local.db`, `/app/data/local.db` in Docker)
+- `BETTER_AUTH_SECRET` — For session security.
+- `BETTER_AUTH_URL` — Base URL of the auth endpoints.
+- `UP_BANK_API_KEY` — Up Bank API credentials.
+- `RESEND_API_KEY` — Resend API key for transaction/reminder emails.
+- `EXPORT_SECRET_TOKEN` — Security token for transactions export API.
+
+### Docker Containerization
+
+Gbookminton is containerized using a highly optimized, two-stage Docker architecture:
+- **Build Stage**: Uses `oven/bun:1` to download dependencies and run the production build (`bun --bun run build`).
+- **Run Stage**: Uses `oven/bun:1-slim` for minimal size. Database path is defaulted to `/app/data/local.db` for mounting volumes.
+- **Entrypoint**: Runs migrations automatically (`bun src/migrate.ts`) on startup before launching SvelteKit (`exec bun build/index.js`).
+
+**Container Deployment Commands:**
+```bash
+# Build the image
+docker build -t gbookminton .
+
+# Run the container with volume mapping
+docker run -d \
+  -p 3000:3000 \
+  -v $(pwd)/data:/app/data \
+  -e BETTER_AUTH_SECRET="your_production_secret" \
+  -e BETTER_AUTH_URL="https://yourdomain.com" \
+  -e RESEND_API_KEY="re_..." \
+  -e UP_BANK_API_KEY="up:yeah:..." \
+  -e EXPORT_SECRET_TOKEN="your_export_token" \
+  --name gbookminton \
+  gbookminton
+```
 
 ---
 

@@ -34,6 +34,7 @@
 			<div class="flex flex-wrap gap-3">
 				<Button href="/admin/settings" variant="outline">Settings</Button>
 				<Button href="/admin/users" variant="outline">Manage Users</Button>
+				<Button href="/admin/transactions/export" variant="outline">Export CSV</Button>
 				<Button href="/admin?showPast={showPast ? 'false' : 'true'}" variant="outline">
 					{showPast ? 'Hide Past Events' : 'Show Past Events'}
 				</Button>

@@ -23,8 +23,6 @@
   # https://devenv.sh/languages/
   languages.javascript = {
     enable = true;
-    pnpm.enable = true;
-    pnpm.install.enable = true;
   };
 
   # https://devenv.sh/processes/

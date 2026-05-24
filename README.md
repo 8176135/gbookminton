@@ -105,3 +105,63 @@ Ensure you have the following environment variables in your `.env`:
 - `BETTER_AUTH_SECRET`: For session security.
 - `RESEND_API_KEY`: For auth emails.
 - `UP_BANK_API_KEY`: For transaction tracking.
+
+## 🐳 Docker Deployment
+
+Gbookminton is containerized using a multi-stage Docker build optimized for SvelteKit, Bun, and SQLite. For maximum developer convenience, we have included high-level `bun run` utility scripts to orchestrate building, launching, and managing the container locally.
+
+### 🚀 Easiest Way: Single Command Up
+
+To automatically build the image, stop any existing container, and boot up a new instance configured with your `.env` variables:
+
+```bash
+bun run docker:up
+```
+
+---
+
+### Alternative: Step-by-Step Orchestration
+
+If you prefer to run commands individually, you can use the following scripts:
+
+#### 1. Build the Docker Image
+
+```bash
+bun run docker:build
+# Or raw command: docker build -t gbookminton .
+```
+
+#### 2. Run the Container
+
+This launches the container, automatically injecting environmental configurations from your `.env` file using Docker's `--env-file` feature, and binds the data directory for SQLite persistence.
+
+```bash
+bun run docker:run
+# Or raw command:
+# docker run -d -p 3000:3000 --env-file .env -v $(pwd)/data:/app/data --name gbookminton gbookminton
+```
+
+#### 3. Stop and Remove the Container
+
+```bash
+bun run docker:stop
+# Or raw command: docker stop gbookminton || true && docker rm gbookminton || true
+```
+
+### 3. Database Migrations
+
+Database migrations are executed **automatically on startup** inside the container before the web server launches (using the programmatic `src/migrate.ts` script). You do not need to run migrations manually.
+
+### 4. Configuration Variables
+
+The following environment variables can be customized:
+
+| Variable              | Default Value        | Description                                                       |
+| --------------------- | -------------------- | ----------------------------------------------------------------- |
+| `PORT`                | `3000`               | The port SvelteKit listens on inside the container.               |
+| `DATABASE_PATH`       | `/app/data/local.db` | The path to the SQLite file. Mount your volume here.              |
+| `BETTER_AUTH_SECRET`  | _(Required)_         | Secret key used for signing session tokens.                       |
+| `BETTER_AUTH_URL`     | _(Required)_         | The public URL of the app (e.g. `https://gbookminton.com`).       |
+| `RESEND_API_KEY`      | _(Required)_         | API key for transaction and notification emails.                  |
+| `UP_BANK_API_KEY`     | _(Required)_         | API key for Up Bank polling.                                      |
+| `EXPORT_SECRET_TOKEN` | _(Required)_         | Secret token to secure the Google Sheets transactions export API. |

@@ -1,0 +1,10 @@
+node_modules
+.svelte-kit
+.devenv
+.direnv
+local.db
+local.db.backup
+.env
+build
+.git
+dist

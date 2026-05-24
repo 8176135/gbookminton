@@ -29,8 +29,9 @@
 <div class="min-h-screen bg-gray-950 p-6 text-white">
 	<div class="mx-auto max-w-7xl">
 		<header class="mb-8">
-			<div class="mb-6 flex items-center gap-4">
+			<div class="mb-6 flex items-center justify-between">
 				<Button href="/admin" variant="outline">Back to Dashboard</Button>
+				<Button href="/admin/transactions/export" variant="outline">Export CSV</Button>
 			</div>
 			<div>
 				<h1 class="text-3xl font-bold tracking-tight text-white">Manage Users</h1>
