@@ -479,6 +479,7 @@ Gbookminton is containerized using a highly optimized, two-stage Docker architec
 ### Docker Compose & Security Hardening (`docker-compose.yml`)
 
 The application is deployed using Docker Compose with extensive production security constraints:
+* **gVisor Sandbox Runtime**: Configured with `runtime: runsc` to execute the application within a highly secure sandbox kernel, isolating container execution from the host OS kernel.
 * **Signal Forwarding (Init)**: Configured with `init: true` to run Docker's built-in `tini` as PID 1, ensuring OS signals (`SIGINT`/`SIGTERM`) are correctly propagated to the child Bun server process.
 * **Non-Root Execution**: Runs as user `1000:1000` (matching the host user and container `bun` user) to prevent root escalation and solve SQLite filesystem permission issues.
 * **Read-Only Root Filesystem**: Mounted with `read_only: true` to block any runtime file tampering.

@@ -6,6 +6,7 @@ services:
     image: gbookminton:latest
     container_name: gbookminton
     init: true
+    runtime: runsc
     user: "1000:1000"
     ports:
       - "3000:3000"
