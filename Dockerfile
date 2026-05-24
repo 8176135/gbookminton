@@ -44,6 +44,7 @@ COPY --from=builder --chown=bun:bun /app/static ./static
 
 # Copy migration files and migration script to run on startup
 COPY --from=builder --chown=bun:bun /app/src/migrate.ts ./src/migrate.ts
+COPY --from=builder --chown=bun:bun /app/src/lib/server/db/schema.ts ./src/lib/server/db/schema.ts
 COPY --from=builder --chown=bun:bun /app/src/lib/server/db/migrations ./src/lib/server/db/migrations
 
 # Copy entrypoint startup script
