@@ -13,7 +13,8 @@
   # https://devenv.sh/packages/
   packages = [
     pkgs.git
-    pkgs.bun
+    pkgs.nodejs_22
+    pkgs.nodePackages.pnpm
     pkgs.python3
     pkgs.gcc
     pkgs.gnumake

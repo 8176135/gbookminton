@@ -1,4 +1,4 @@
-import { Database } from 'bun:sqlite';
+import Database from 'better-sqlite3';
 
 console.log('Patching local.db with missing columns...');
 const sqlite = new Database('./data/local.db');
@@ -57,7 +57,7 @@ const tablesToCreate = [
 
 for (const { name, sql } of tablesToCreate) {
 	try {
-		sqlite.run(sql);
+		sqlite.exec(sql);
 		console.log(`✅ Ensured table '${name}' exists.`);
 	} catch (e: any) {
 		console.error(`❌ Error creating table '${name}':`, e.message);
@@ -67,7 +67,7 @@ for (const { name, sql } of tablesToCreate) {
 // 2. Add missing columns to existing tables
 for (const { table, column, def } of columnsToAdd) {
 	try {
-		sqlite.run(`ALTER TABLE ${table} ADD COLUMN ${column} ${def}`);
+		sqlite.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${def}`);
 		console.log(`✅ Added column '${column}' to '${table}'`);
 	} catch (e: any) {
 		if (e.message.includes('duplicate column')) {
@@ -79,4 +79,4 @@ for (const { table, column, def } of columnsToAdd) {
 }
 
 sqlite.close();
-console.log('\nPatching complete! You can now run `bun run dev` securely.');
+console.log('\nPatching complete! You can now run `pnpm dev` securely.');

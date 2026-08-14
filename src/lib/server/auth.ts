@@ -19,6 +19,13 @@ if (!building) {
 
 
 export const auth = betterAuth({
+	// Vite sets NODE_ENV=production during `vite build`, and better-auth refuses a
+	// default/invalid secret under production. During the SvelteKit build the server
+	// entry is evaluated to extract route metadata, so hand it a throwaway secret —
+	// at runtime the real BETTER_AUTH_SECRET is always used (and still fail-fast if missing).
+	secret: building
+		? 'gbookminton-build-time-secret-placeholder-only'
+		: (env.BETTER_AUTH_SECRET as string | undefined),
 	database: drizzleAdapter(db, {
 		provider: 'sqlite',
 		schema: {

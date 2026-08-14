@@ -1,18 +1,45 @@
-import { migrate } from 'drizzle-orm/bun-sqlite/migrator';
-import { drizzle } from 'drizzle-orm/bun-sqlite';
-import { Database } from 'bun:sqlite';
+import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
+import Database from 'better-sqlite3';
+import { existsSync, mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
 
-const sqlite = new Database(process.env.DATABASE_PATH || 'local.db');
+const dbPath = process.env.DATABASE_PATH || 'local.db';
+const dbDir = dirname(dbPath);
+if (dbDir && dbDir !== '.' && !existsSync(dbDir)) {
+	mkdirSync(dbDir, { recursive: true });
+}
+
+const sqlite = new Database(dbPath);
 const db = drizzle(sqlite);
 
-await migrate(db, { migrationsFolder: './src/lib/server/db/migrations' });
-console.log('Migrations complete!');
+const hasMigrationsTable = sqlite
+	.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = '__drizzle_migrations'")
+	.get();
+const tableCount = (
+	sqlite
+		.prepare(
+			"SELECT count(*) AS c FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'"
+		)
+		.get() as { c: number }
+).c;
+
+if (!hasMigrationsTable && tableCount > 0) {
+	console.warn(
+		'Existing database detected without a Drizzle migration journal (likely created via db:push/patch). ' +
+			'Skipping journal migrations. Changelog table and audit triggers will still be ensured.'
+	);
+} else {
+	await migrate(db, { migrationsFolder: './src/lib/server/db/migrations' });
+	console.log('Migrations complete!');
+}
 
 import { getTableColumns } from 'drizzle-orm';
+import type { SQLiteTable } from 'drizzle-orm/sqlite-core';
 import * as schema from './lib/server/db/schema';
 
 console.log('Ensuring changelog table exists...');
-sqlite.run(`
+sqlite.exec(`
 	CREATE TABLE IF NOT EXISTS changelog (
 		id TEXT PRIMARY KEY,
 		tableName TEXT NOT NULL,
@@ -40,7 +67,7 @@ function buildJsonObject(tableName: string, prefix: 'NEW' | 'OLD', columns: stri
 	return `json_object(${args})`;
 }
 
-function setupTableAuditing(tableName: string, tableSchema: any) {
+function setupTableAuditing(tableName: string, tableSchema: SQLiteTable) {
 	const columns = Object.values(getTableColumns(tableSchema)).map(col => col.name);
 	
 	const newJson = buildJsonObject(tableName, 'NEW', columns);
@@ -49,12 +76,12 @@ function setupTableAuditing(tableName: string, tableSchema: any) {
 	console.log(`Setting up dynamic changelog triggers for table: ${tableName}`);
 	
 	// Drop old triggers to ensure they are recreated with the latest columns
-	sqlite.run(`DROP TRIGGER IF EXISTS "${tableName}_after_insert";`);
-	sqlite.run(`DROP TRIGGER IF EXISTS "${tableName}_after_update";`);
-	sqlite.run(`DROP TRIGGER IF EXISTS "${tableName}_after_delete";`);
+	sqlite.exec(`DROP TRIGGER IF EXISTS "${tableName}_after_insert";`);
+	sqlite.exec(`DROP TRIGGER IF EXISTS "${tableName}_after_update";`);
+	sqlite.exec(`DROP TRIGGER IF EXISTS "${tableName}_after_delete";`);
 	
 	// 1. Insert Trigger
-	sqlite.run(`
+	sqlite.exec(`
 		CREATE TRIGGER "${tableName}_after_insert"
 		AFTER INSERT ON "${tableName}"
 		BEGIN
@@ -72,7 +99,7 @@ function setupTableAuditing(tableName: string, tableSchema: any) {
 	`);
 
 	// 2. Update Trigger
-	sqlite.run(`
+	sqlite.exec(`
 		CREATE TRIGGER "${tableName}_after_update"
 		AFTER UPDATE ON "${tableName}"
 		BEGIN
@@ -90,7 +117,7 @@ function setupTableAuditing(tableName: string, tableSchema: any) {
 	`);
 
 	// 3. Delete Trigger
-	sqlite.run(`
+	sqlite.exec(`
 		CREATE TRIGGER "${tableName}_after_delete"
 		AFTER DELETE ON "${tableName}"
 		BEGIN

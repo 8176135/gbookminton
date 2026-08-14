@@ -1,8 +1,8 @@
-import { Database } from 'bun:sqlite';
+import Database from 'better-sqlite3';
 
 console.log('Attaching backup database...');
 const sqlite = new Database('local.db');
-sqlite.run("ATTACH DATABASE 'local.db.backup' AS backup");
+sqlite.exec("ATTACH DATABASE 'local.db.backup' AS backup");
 
 const tables = [
 	'user',
@@ -18,12 +18,12 @@ const tables = [
 for (const table of tables) {
 	try {
 		// 1. Get column list from the new database
-		const newColsQuery = sqlite.query(`PRAGMA table_info("${table}")`).all() as any[];
+		const newColsQuery = sqlite.prepare(`PRAGMA table_info("${table}")`).all() as any[];
 		if (newColsQuery.length === 0) continue; // Table doesn't exist
 		const newCols = newColsQuery.map((c) => c.name);
 
 		// 2. Get column list from the backup database
-		const oldColsQuery = sqlite.query(`PRAGMA backup.table_info("${table}")`).all() as any[];
+		const oldColsQuery = sqlite.prepare(`PRAGMA backup.table_info("${table}")`).all() as any[];
 		if (oldColsQuery.length === 0) continue; // Table didn't exist in backup
 		const oldCols = oldColsQuery.map((c) => c.name);
 
@@ -33,7 +33,7 @@ for (const table of tables) {
 
 		// 4. Do the insert, quoting table names to avoid reserved keyword errors (e.g. transaction)
 		if (commonCols.length > 0) {
-			sqlite.run(
+			sqlite.exec(
 				`INSERT OR IGNORE INTO "${table}" (${colStr}) SELECT ${colStr} FROM backup."${table}"`
 			);
 			console.log(`✅ Restored data for table: ${table} (${commonCols.length} matching columns)`);

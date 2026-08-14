@@ -6,7 +6,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 
-	let { data, form }: PageProps = $props();
+	let { data }: PageProps = $props();
 	let user = $derived(data.user);
 	let currentEvents = $derived(data.currentEvents);
 	let upcomingEvents = $derived(data.upcomingEvents);

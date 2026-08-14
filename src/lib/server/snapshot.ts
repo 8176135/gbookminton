@@ -1,6 +1,7 @@
-import { Database } from 'bun:sqlite';
+import Database from 'better-sqlite3';
 import * as fs from 'fs';
 import * as path from 'path';
+import { createHash } from 'node:crypto';
 
 export async function runBackupSnapshot() {
 	try {
@@ -20,7 +21,7 @@ export async function runBackupSnapshot() {
 		}
 
 		const db = new Database(dbPath);
-		db.run(`VACUUM INTO '${tempBackupPath}';`);
+		db.exec(`VACUUM INTO '${tempBackupPath.replace(/'/g, "''")}';`);
 		db.close();
 
 		if (!fs.existsSync(tempBackupPath)) {
@@ -30,7 +31,7 @@ export async function runBackupSnapshot() {
 
 		// 2. Hash check to avoid redundant backups
 		const tempBuffer = fs.readFileSync(tempBackupPath);
-		const tempHash = Bun.hash(tempBuffer).toString();
+		const tempHash = createHash('sha256').update(tempBuffer).digest('hex');
 
 		// Find the latest snapshot in the backup directory
 		const files = fs.readdirSync(backupsDir)
@@ -41,7 +42,7 @@ export async function runBackupSnapshot() {
 		if (latestFile) {
 			const latestPath = path.join(backupsDir, latestFile);
 			const latestBuffer = fs.readFileSync(latestPath);
-			const latestHash = Bun.hash(latestBuffer).toString();
+			const latestHash = createHash('sha256').update(latestBuffer).digest('hex');
 
 			if (tempHash === latestHash) {
 				console.log('Database state unchanged since last snapshot. Skipping snapshot creation.');

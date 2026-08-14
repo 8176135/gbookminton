@@ -5,8 +5,9 @@ A premium membership and tournament management system for badminton/pickleball g
 ## 🚀 Tech Stack
 
 - **Framework**: [SvelteKit 5](https://svelte.dev/)
-- **Runtime**: [Bun](https://bun.sh/)
-- **Database**: [SQLite](https://www.sqlite.org/) via [`bun:sqlite`](https://bun.sh/docs/api/sqlite)
+- **Runtime**: [Node.js](https://nodejs.org/) (>= 22)
+- **Database**: [SQLite](https://www.sqlite.org/) via [`better-sqlite3`](https://github.com/WiseLibs/better-sqlite3)
+- **Package Manager**: [pnpm](https://pnpm.io/)
 - **ORM**: [Drizzle ORM](https://orm.drizzle.team/)
 - **Authentication**: [BetterAuth](https://better-auth.com/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
@@ -21,7 +22,7 @@ The system uses a highly structured Drizzle schema to manage users, sessions, ev
 
 - `schema.ts`: Defines the unified types for users (with custom `role`, `balance`, and `shortCode` fields), events, and event registrations.
   - Events carry an `isPrivate` flag; when set, non-admin users can only see registration **counts** (not names) on the event detail page.
-- `index.ts`: Handles the database connection using `bun:sqlite`.
+- `index.ts`: Handles the database connection using `better-sqlite3`.
 
 ### 2. Authentication (`src/lib/server/auth.ts`)
 
@@ -74,28 +75,28 @@ The application features a modern, premium aesthetic:
 
 ### Prerequisites
 
-- [Bun](https://bun.sh/) installed cleanly on your system.
+- [Node.js](https://nodejs.org/) >= 22 installed cleanly on your system.
+- [pnpm](https://pnpm.io/) (uses the version pinned in `packageManager`).
 
 ### Install & Sync
 
 ```bash
-bun install
-bunx svelte-kit sync
+pnpm install
+pnpm prepare        # Runs svelte-kit sync
 ```
 
 ### Database Management
 
 ```bash
-bunx drizzle-kit push  # Update schema
-bunx drizzle-kit studio # Open DB explorer
+pnpm db:push       # Push schema to SQLite
+pnpm db:studio     # Open DB explorer
+pnpm db:setup      # Full programmatic setup (migrations + changelog triggers)
 ```
 
 ### Run Server
 
 ```bash
-bun dev
-# For full Bun integration
-bun --bun run dev
+pnpm dev
 ```
 
 ## 🔐 Configuration
@@ -108,10 +109,10 @@ Ensure you have the following environment variables in your `.env`:
 
 ## 🐳 Docker Deployment
 
-Gbookminton is containerized using a multi-stage Docker build optimized for SvelteKit, Bun, and SQLite, running under a highly locked-down Docker Compose architecture. 
+Gbookminton is containerized using a multi-stage Docker build optimized for SvelteKit, Node.js, and SQLite, running under a highly locked-down Docker Compose architecture. 
 
 The container is hardened with state-of-the-art security settings:
-* **Non-Root User Execution**: Runs as user `1000:1000` (matching the `bun` user in the container and the default UID on host platforms) to ensure secure file permissions and eliminate host-escalation vulnerabilities.
+* **Non-Root User Execution**: Runs as user `1000:1000` (matching the `node` user in the container and the default UID on host platforms) to ensure secure file permissions and eliminate host-escalation vulnerabilities.
 * **Read-Only Root Filesystem**: The container OS filesystem is mounted as read-only (`read_only: true`), preventing any malicious runtime modifications to SvelteKit or server binaries.
 * **Dropped Capabilities**: Drops all default Linux kernel privileges (`cap_drop: [ALL]`) since no root-level functions are required.
 * **Privilege Escalation Blocked**: Prevents child processes from obtaining new privileges (`security_opt: [no-new-privileges:true]`).
@@ -121,7 +122,7 @@ The container is hardened with state-of-the-art security settings:
 
 To automatically build the image, configure container security constraints, load environmental variables from `.env`, and start the application in detached mode:
 ```bash
-bun run docker:up
+pnpm docker:up
 ```
 
 ---
@@ -132,21 +133,21 @@ If you prefer to run commands individually, you can use the following scripts:
 
 #### 1. Build the Container Image
 ```bash
-bun run docker:build
+pnpm docker:build
 # Or raw command: docker compose build
 ```
 
 #### 2. Run the Container (Detached)
 This launches the container using the security profiles defined in `docker-compose.yml`, binds the local `./data` directory for SQLite persistence, and loads `.env` variables.
 ```bash
-bun run docker:run
+pnpm docker:run
 # Or raw command: docker compose up -d
 ```
 
 #### 3. Stop and Remove the Container
 This gracefully shuts down the container, stops the server, and cleans up temporary resources.
 ```bash
-bun run docker:stop
+pnpm docker:stop
 # Or raw command: docker compose down
 ```
 

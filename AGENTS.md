@@ -4,7 +4,7 @@
 > **AGENTS DIRECTIVE**: AI coding agents MUST keep this document (`AGENTS.md`) strictly up-to-date after making any significant changes to the repository, including adding new components, routes, database tables, modules, utility scripts, or changing APIs/configurations.
 
 **Project**: Gbookminton  
-**Type**: SvelteKit 5 Application (Bun + SQLite)  
+**Type**: SvelteKit 5 Application (Node.js + SQLite)  
 **Purpose**: Premium membership and tournament management for badminton/pickleball groups
 
 ---
@@ -28,8 +28,9 @@ Gbookminton is a full-stack web application for managing group memberships and t
 | Layer     | Technology                            |
 | --------- | ------------------------------------- |
 | Framework | SvelteKit 5 (SSR + client) via `@sveltejs/adapter-node` |
-| Runtime   | Bun                                   |
-| Database  | SQLite via `bun:sqlite` + Drizzle ORM (custom path via `DATABASE_PATH`) |
+| Runtime   | Node.js (>= 22)                       |
+| Database  | SQLite via `better-sqlite3` + Drizzle ORM (custom path via `DATABASE_PATH`) |
+| Packaging | pnpm (bun removed; see `packageManager` in package.json) |
 | Styling   | Tailwind CSS v4                       |
 | Auth      | BetterAuth                            |
 | Build     | Vite                                  |
@@ -42,7 +43,7 @@ src/
 ├── lib/                    # Shared library code
 │   ├── server/            # Server-only utilities (DB, auth, APIs)
 │   │   ├── db/
-│   │   │   ├── index.ts   # Database connection (bun:sqlite)
+│   │   │   ├── index.ts   # Database connection (better-sqlite3)
 │   │   │   └── schema.ts  # ALL Drizzle table definitions
 │   │   ├── auth.ts        # BetterAuth configuration
 │   │   ├── upbank.ts      # Up Bank API polling
@@ -78,7 +79,7 @@ src/
 ├── app.d.ts              # TypeScript declarations (App.Locals)
 ├── app.html              # HTML template
 ├── app.css               # Global styles (Tailwind)
-├── Dockerfile            # Multi-stage production container build (oven/bun:1-slim)
+├── Dockerfile            # Multi-stage production container build (node:22-slim + pnpm)
 └── entrypoint.sh         # Container entrypoint executing auto-migrations & app startup
 ```
 
@@ -211,39 +212,41 @@ The project uses [shadcn-svelte](https://shadcn-svelte.com/) for UI primitives. 
 ## Development Commands
 
 ```bash
-# Install dependencies (Bun)
-bun install
+# Install dependencies
+pnpm install
 
 # Development server (hot reload)
-bun run dev
+pnpm dev
 
 # Production build
-bun run build
+pnpm build
 
 # Preview production build
-bun run preview
+pnpm preview
 
 # Type checking
-bun run check         # Single run
-bun run check:watch   # Watch mode
+pnpm check         # Single run
+pnpm check:watch   # Watch mode
 
 # Code quality
-bun run lint          # ESLint
-bun run format        # Prettier
+pnpm lint          # Prettier (check only)
+pnpm format        # Prettier (write)
 
 # Database
-bun run db:push       # Push schema to SQLite (via drizzle-kit)
-bun run db:studio     # Drizzle Studio (DB GUI)
-bun run migrate       # Run migrations
+pnpm db:push       # Push schema to SQLite (via drizzle-kit)
+pnpm db:studio     # Drizzle Studio (DB GUI)
+pnpm db:generate   # Generate migration SQL (via drizzle-kit)
+pnpm db:migrate    # Apply generated migration SQL (via drizzle-kit)
+pnpm db:setup      # Programmatic setup: migrations + changelog + audit triggers (src/migrate.ts)
 
 # Prepare (post-install)
-bun run prepare       # Runs svelte-kit sync
+pnpm prepare       # Runs svelte-kit sync
 
 # Docker
-bun run docker:build  # Build Docker container image locally
-bun run docker:run    # Start container mounting ./data and injecting .env files
-bun run docker:stop   # Stops and removes active container
-bun run docker:up     # Sequence command: builds, stops, and starts container
+pnpm docker:build  # Build Docker container image locally
+pnpm docker:run    # Start container mounting ./data and injecting .env files
+pnpm docker:stop   # Stops and removes active container
+pnpm docker:up     # Sequence command: builds, stops, and starts container
 ```
 
 ### Utility Scripts
@@ -256,10 +259,10 @@ Resets or overrides the password of any user locally. Supports interactive selec
 
 ```bash
 # Interactive mode
-bun run reset-password
+pnpm reset-password
 
 # Command-line arguments mode
-bun run reset-password <email> <new-password>
+pnpm reset-password <email> <new-password>
 ```
 
 #### Generate Test Events (`scripts/generate-test-events.ts`)
@@ -268,13 +271,13 @@ Populates the database with test events across different time categories (past, 
 
 ```bash
 # Interactive mode
-bun scripts/generate-test-events.ts
+pnpm generate-test-events
 
 # Specify events per category
-bun scripts/generate-test-events.ts --count 5
+pnpm generate-test-events --count 5
 
 # Dry-run mode (prints SQL only, does not write to database)
-bun scripts/generate-test-events.ts --dry-run
+pnpm generate-test-events --dry-run
 ```
 
 #### Migrate Event Visibility (`scripts/migrate-visibility.ts`)
@@ -282,7 +285,7 @@ bun scripts/generate-test-events.ts --dry-run
 Handles the migration of the database schema mapping the old `isPrivate` column in the `event` table to the new `visibility` field:
 
 ```bash
-bun scripts/migrate-visibility.ts
+pnpm migrate-visibility
 ```
 
 #### Credit User Balance (`scripts/add-funds.ts`)
@@ -291,13 +294,13 @@ Manually credits a user's account balance, inserting an audited transaction. Sup
 
 ```bash
 # Interactive mode
-bun run add-funds
+pnpm add-funds
 
 # Command-line arguments mode
-bun run add-funds <email> <amount_in_dollars> [custom_notes]
+pnpm add-funds <email> <amount_in_dollars> [custom_notes]
 ```
 
-**Required Runtime**: Bun (not Node.js)
+**Required Runtime**: Node.js (>= 22; scripts run via `tsx`)
 
 ---
 
@@ -335,7 +338,7 @@ Read: https://www.shadcn-svelte.com/llms.txt for full details.
 **Adding new components**:
 
 ```bash
-bunx shadcn-svelte@latest add <component-name>
+pnpm dlx shadcn-svelte@latest add <component-name>
 ```
 
 **Import pattern**: Always use the index.ts re-export:
@@ -419,9 +422,9 @@ export const actions = {
 
 ### Entry Points
 
-- **Dev**: `bun run dev` → Vite dev server
-- **Prod**: `bun run build` → SvelteKit build → standalone server (`build/index.js`) run via `bun build/index.js`
-- **Migrations**: `bun src/migrate.ts` for programmatic database setup
+- **Dev**: `pnpm dev` → Vite dev server
+- **Prod**: `pnpm build` → SvelteKit build → standalone server (`build/index.js`) run via `node build/index.js`
+- **Migrations**: `pnpm db:setup` (i.e. `tsx src/migrate.ts`) for programmatic database setup
 
 ---
 
@@ -429,13 +432,13 @@ export const actions = {
 
 ### Environment
 
-- **Runtime**: Bun (required, not Node.js)
-- **Package Manager**: Bun (using bun.lock)
+- **Runtime**: Node.js (required, not Bun)
+- **Package Manager**: pnpm (using pnpm-lock.yaml)
 - **Dev Shell**: Nix via `devenv.yaml` / `devenv.nix` (recommended)
 
 #### Nix / Devenv Setup on NixOS
 
-This repository is pre-configured with `devenv` and `direnv` to provide a complete, reproducible environment with Bun, pnpm, Python, GCC, SQLite, and more.
+This repository is pre-configured with `devenv` and `direnv` to provide a complete, reproducible environment with Node.js, pnpm, Python, GCC, SQLite, and more.
 
 - **For Developers (with direnv)**:
   Once `direnv` is allowed (`direnv allow`), entering the directory will automatically load the correct versions of all tools into your shell.
@@ -443,12 +446,12 @@ This repository is pre-configured with `devenv` and `direnv` to provide a comple
   Standard non-interactive terminals (such as those used by AI agents or CI/CD) do not load `direnv` by default. Use either of the following patterns to run commands:
   - **One-off commands**: Prefix your command with `devenv shell -- `:
     ```bash
-    devenv shell -- bun run dev
+    devenv shell -- pnpm dev
     ```
   - **Persistent terminal sessions**: Run `eval "$(direnv export bash)"` at the start of the session to load the devenv environment into the active shell process:
     ```bash
     eval "$(direnv export bash)"
-    bun run dev
+    pnpm dev
     ```
 
 ### VSCode Extensions (recommended)
@@ -472,16 +475,16 @@ Required variables (typically in `.env`):
 ### Docker Containerization
 
 Gbookminton is containerized using a highly optimized, two-stage Docker architecture:
-- **Build Stage**: Uses `oven/bun:1` to download dependencies and run the production build (`bun --bun run build`).
-- **Run Stage**: Uses `oven/bun:1-slim` for minimal size. Runs strictly under the non-root `bun` user (UID/GID 1000) for security.
-- **Entrypoint**: Runs migrations automatically (`bun src/migrate.ts`) on startup before launching SvelteKit (`exec bun build/index.js`).
+- **Build Stage**: Uses `node:22-slim` with pnpm to download dependencies and run the production build (`pnpm build`). The programmatic migration script is compiled to JS via `esbuild` (`build/migrate.mjs`).
+- **Run Stage**: Uses `node:22-slim` for minimal size. Runs strictly under the non-root `node` user (UID/GID 1000) for security.
+- **Entrypoint**: Runs migrations automatically (`node build/migrate.mjs`) on startup before launching SvelteKit (`exec node build/index.js`).
 
 ### Docker Compose & Security Hardening (`docker-compose.yml`)
 
 The application is deployed using Docker Compose with extensive production security constraints:
 * **gVisor Sandbox Runtime**: Configured with `runtime: runsc` to execute the application within a highly secure sandbox kernel, isolating container execution from the host OS kernel.
-* **Signal Forwarding (Init)**: Configured with `init: true` to run Docker's built-in `tini` as PID 1, ensuring OS signals (`SIGINT`/`SIGTERM`) are correctly propagated to the child Bun server process.
-* **Non-Root Execution**: Runs as user `1000:1000` (matching the host user and container `bun` user) to prevent root escalation and solve SQLite filesystem permission issues.
+* **Signal Forwarding (Init)**: Configured with `init: true` to run Docker's built-in `tini` as PID 1, ensuring OS signals (`SIGINT`/`SIGTERM`) are correctly propagated to the child Node server process.
+* **Non-Root Execution**: Runs as user `1000:1000` (matching the host user and container `node` user) to prevent root escalation and solve SQLite filesystem permission issues.
 * **Read-Only Root Filesystem**: Mounted with `read_only: true` to block any runtime file tampering.
 * **Linux Capabilities Dropped**: Drops all kernel capabilities (`cap_drop: [ALL]`).
 * **No Privilege Escalation**: Restricts binary escalation (`security_opt: [no-new-privileges:true]`).
@@ -491,16 +494,16 @@ The application is deployed using Docker Compose with extensive production secur
 **Container Deployment Commands:**
 ```bash
 # Build the image via Compose
-bun run docker:build  # Or: docker compose build
+pnpm docker:build  # Or: docker compose build
 
 # Start the container detached
-bun run docker:run    # Or: docker compose up -d
+pnpm docker:run    # Or: docker compose up -d
 
 # Stop and remove container
-bun run docker:stop   # Or: docker compose down
+pnpm docker:stop   # Or: docker compose down
 
 # Fast Build & Up (Recommended)
-bun run docker:up     # Or: docker compose up -d --build
+pnpm docker:up     # Or: docker compose up -d --build
 ```
 
 ---

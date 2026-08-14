@@ -1,12 +1,10 @@
-#!/usr/bin/env bun
-
 /**
  * Generate test events for development
  *
  * Usage:
- *   bun scripts/generate-test-events.ts                    # Interactive mode
- *   bun scripts/generate-test-events.ts --dry-run          # Print only, don't insert
- *   bun scripts/generate-test-events.ts --count 5          # Generate 5 events per category
+ *   pnpm generate-test-events                        # Interactive mode
+ *   pnpm generate-test-events --dry-run              # Print only, don't insert
+ *   pnpm generate-test-events --count 5              # Generate 5 events per category
  */
 
 import { db } from '../src/lib/server/db';

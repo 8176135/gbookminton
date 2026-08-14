@@ -1,5 +1,3 @@
-#!/usr/bin/env bun
-
 import { db } from '../src/lib/server/db';
 import { user, account } from '../src/lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';

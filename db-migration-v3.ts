@@ -1,4 +1,4 @@
-import { Database } from 'bun:sqlite';
+import Database from 'better-sqlite3';
 
 console.log('Running database migration v3...');
 const sqlite = new Database('local.db');
@@ -12,7 +12,7 @@ const columnsToAdd = [
 
 for (const { table, column, def } of columnsToAdd) {
 	try {
-		sqlite.run(`ALTER TABLE ${table} ADD COLUMN ${column} ${def}`);
+		sqlite.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${def}`);
 		console.log(`✅ Added column '${column}' to '${table}'`);
 	} catch (e: any) {
 		if (e.message.includes('duplicate column')) {
@@ -27,7 +27,7 @@ for (const { table, column, def } of columnsToAdd) {
 try {
 	// Find first admin
 	const admins = sqlite
-		.query("SELECT id, name, email, accountType FROM user WHERE role = 'admin'")
+		.prepare("SELECT id, name, email, accountType FROM user WHERE role = 'admin'")
 		.all() as any[];
 
 	if (admins.length === 0) {
@@ -40,16 +40,16 @@ try {
 		);
 
 		// Set default admin allowedPlusOnes to 999999 (infinite invites) and accountType to company
-		sqlite.run("UPDATE user SET allowedPlusOnes = 999999, accountType = 'company' WHERE id = ?", [
+		sqlite.prepare("UPDATE user SET allowedPlusOnes = 999999, accountType = 'company' WHERE id = ?").run(
 			defaultAdmin.id
-		]);
+		);
 		console.log(
 			`✅ Updated admin '${defaultAdmin.name}' invite limit to 999999 and accountType to 'company'.`
 		);
 
 		// Find existing plusone users without an inviter
 		const uninvitedPlusones = sqlite
-			.query(
+			.prepare(
 				"SELECT id, name, email FROM user WHERE accountType = 'plusone' AND (invitedById IS NULL OR invitedById = '')"
 			)
 			.all() as any[];
@@ -62,7 +62,7 @@ try {
 			// Exclude assigning an admin to themselves
 			if (p.id === defaultAdmin.id) continue;
 
-			sqlite.run('UPDATE user SET invitedById = ? WHERE id = ?', [defaultAdmin.id, p.id]);
+			sqlite.prepare('UPDATE user SET invitedById = ? WHERE id = ?').run(defaultAdmin.id, p.id);
 			console.log(
 				`🤝 Assigned existing plus-one '${p.name}' (${p.email}) to inviter '${defaultAdmin.name}'.`
 			);

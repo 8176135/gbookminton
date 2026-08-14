@@ -1,4 +1,6 @@
 ALTER TABLE `transaction` RENAME TO `balanceTransaction`;--> statement-breakpoint
+ALTER TABLE `balanceTransaction` ADD `notes` text;--> statement-breakpoint
+ALTER TABLE `balanceTransaction` ADD `eventSignupId` text REFERENCES `eventSignup`(`id`);--> statement-breakpoint
 PRAGMA foreign_keys=OFF;--> statement-breakpoint
 CREATE TABLE `__new_balanceTransaction` (
 	`id` text PRIMARY KEY NOT NULL,
