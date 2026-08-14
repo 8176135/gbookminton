@@ -71,7 +71,7 @@ interface GeneratedEvent {
 	deadline: Date;
 	cost: number;
 	isLocked: boolean;
-	isPrivate: boolean;
+	visibility: string;
 	createdAt: Date;
 	updatedAt: Date;
 }
@@ -103,7 +103,7 @@ function generateEvent(timeOffsetHours: number): GeneratedEvent {
 		deadline,
 		cost,
 		isLocked: false,
-		isPrivate: false,
+		visibility: 'onlyCompany',
 		createdAt: now,
 		updatedAt: now
 	};
@@ -121,13 +121,13 @@ async function printEventSQL(ev: GeneratedEvent): Promise<void> {
 		ev.deadline.getTime(),
 		ev.cost,
 		ev.isLocked ? 1 : 0,
-		ev.isPrivate ? 1 : 0,
+		`'${ev.visibility}'`,
 		ev.createdAt.getTime(),
 		ev.updatedAt.getTime()
 	].join(', ');
 
 	console.log(
-		`INSERT INTO event (id, title, date, location, duration, description, capacity, deadline, cost, isLocked, isPrivate, createdAt, updatedAt) VALUES (${values});`
+		`INSERT INTO event (id, title, date, location, duration, description, capacity, deadline, cost, isLocked, visibility, createdAt, updatedAt) VALUES (${values});`
 	);
 	console.log(`  -- ${ev.title}`);
 	console.log(`  -- Event: ${formatDate(ev.date)}`);
@@ -147,7 +147,7 @@ async function insertEvent(ev: GeneratedEvent): Promise<void> {
 		deadline: ev.deadline,
 		cost: ev.cost,
 		isLocked: ev.isLocked,
-		isPrivate: ev.isPrivate,
+		visibility: ev.visibility,
 		createdAt: ev.createdAt,
 		updatedAt: ev.updatedAt
 	});

@@ -21,7 +21,7 @@ A premium membership and tournament management system for badminton/pickleball g
 The system uses a highly structured Drizzle schema to manage users, sessions, events, and registrations.
 
 - `schema.ts`: Defines the unified types for users (with custom `role`, `balance`, and `shortCode` fields), events, and event registrations.
-  - Events carry an `isPrivate` flag; when set, non-admin users can only see registration **counts** (not names) on the event detail page.
+  - Events carry a `visibility` field (`private`, `onlyCompany`, `public`); for `private` events, non-admin users can only see registration **counts** (not names) on the event detail page.
 - `index.ts`: Handles the database connection using `better-sqlite3`.
 
 ### 2. Authentication (`src/lib/server/auth.ts`)
@@ -46,7 +46,7 @@ The server utilizes SvelteKit hooks to run essential background tasks:
 A **shared, role-aware** event detail page accessible to all logged-in users:
 
 - **Public users** see the event details, the attendee list (names only, no emails), and their own signup status.
-- **Private events** (`isPrivate = true`): non-admins only see the registered/waitlist _counts_ — individual names are hidden.
+- **Private events** (`visibility = 'private'`): non-admins only see the registered/waitlist _counts_ — individual names are hidden.
 - **Admins** see full attendee details (including emails and withdrawn users) plus an inline **Edit Event** panel where all event fields (title, date, location, description, capacity, cost, deadline, and privacy) can be updated without leaving the page.
 
 ### 5. UI/UX Design System
@@ -90,7 +90,7 @@ pnpm prepare        # Runs svelte-kit sync
 ```bash
 pnpm db:push       # Push schema to SQLite
 pnpm db:studio     # Open DB explorer
-pnpm db:setup      # Full programmatic setup (migrations + changelog triggers)
+pnpm db:migrate    # Apply migrations (Drizzle journal)
 ```
 
 ### Run Server
@@ -153,7 +153,7 @@ pnpm docker:stop
 
 ### 3. Database Migrations
 
-Database migrations are executed **automatically on startup** inside the container before the web server launches (using the programmatic `src/migrate.ts` script). You do not need to run migrations manually.
+Database migrations are executed **automatically on startup** inside the container before the web server launches (the entrypoint runs `drizzle-kit migrate`, which targets `DATABASE_PATH` via `drizzle.config.ts`). The full schema — including the `changelog` table and audit triggers (migration `0004`) — comes from the Drizzle journal, so you do not need to run migrations manually.
 
 ### 4. Configuration Variables
 

@@ -20,9 +20,6 @@ COPY . .
 # Build the SvelteKit application for production
 RUN pnpm build
 
-# Compile the programmatic migration script for the runner stage
-RUN pnpm exec esbuild src/migrate.ts --bundle --platform=node --format=esm --packages=external --outfile=build/migrate.mjs
-
 # ==========================================
 # STAGE 2: Runner
 # ==========================================
@@ -53,6 +50,9 @@ COPY --from=builder --chown=node:node /app/static ./static
 
 # Copy migration files needed at startup
 COPY --from=builder --chown=node:node /app/src/lib/server/db/migrations ./src/lib/server/db/migrations
+
+# Copy drizzle-kit config so migrations can be applied on startup
+COPY --chown=node:node drizzle.config.ts ./
 
 # Copy entrypoint startup script
 COPY --from=builder --chown=node:node /app/entrypoint.sh ./entrypoint.sh

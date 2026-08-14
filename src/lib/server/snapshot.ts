@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 
 export async function runBackupSnapshot() {
 	try {
-		const dbPath = process.env.DATABASE_PATH || 'local.db';
+		const dbPath = process.env.DATABASE_PATH || './data/local.db';
 		const dbDir = path.dirname(dbPath);
 		const backupsDir = path.join(dbDir, 'backups');
 

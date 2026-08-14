@@ -237,7 +237,6 @@ pnpm db:push       # Push schema to SQLite (via drizzle-kit)
 pnpm db:studio     # Drizzle Studio (DB GUI)
 pnpm db:generate   # Generate migration SQL (via drizzle-kit)
 pnpm db:migrate    # Apply generated migration SQL (via drizzle-kit)
-pnpm db:setup      # Programmatic setup: migrations + changelog + audit triggers (src/migrate.ts)
 
 # Prepare (post-install)
 pnpm prepare       # Runs svelte-kit sync
@@ -278,14 +277,6 @@ pnpm generate-test-events --count 5
 
 # Dry-run mode (prints SQL only, does not write to database)
 pnpm generate-test-events --dry-run
-```
-
-#### Migrate Event Visibility (`scripts/migrate-visibility.ts`)
-
-Handles the migration of the database schema mapping the old `isPrivate` column in the `event` table to the new `visibility` field:
-
-```bash
-pnpm migrate-visibility
 ```
 
 #### Credit User Balance (`scripts/add-funds.ts`)
@@ -424,7 +415,7 @@ export const actions = {
 
 - **Dev**: `pnpm dev` → Vite dev server
 - **Prod**: `pnpm build` → SvelteKit build → standalone server (`build/index.js`) run via `node build/index.js`
-- **Migrations**: `pnpm db:setup` (i.e. `tsx src/migrate.ts`) for programmatic database setup
+- **Migrations**: `pnpm db:migrate` (i.e. `drizzle-kit migrate`) applies the Drizzle journal; the container entrypoint runs it automatically on startup. The `changelog` table and its audit triggers are created by migration `0004`, so the journal is the single source of truth for schema + audit setup.
 
 ---
 
@@ -475,9 +466,9 @@ Required variables (typically in `.env`):
 ### Docker Containerization
 
 Gbookminton is containerized using a highly optimized, two-stage Docker architecture:
-- **Build Stage**: Uses `node:22-slim` with pnpm to download dependencies and run the production build (`pnpm build`). The programmatic migration script is compiled to JS via `esbuild` (`build/migrate.mjs`).
+- **Build Stage**: Uses `node:22-slim` with pnpm to download dependencies (including `drizzle-kit`, which ships in the production image so migrations can run at startup) and run the production build (`pnpm build`).
 - **Run Stage**: Uses `node:22-slim` for minimal size. Runs strictly under the non-root `node` user (UID/GID 1000) for security.
-- **Entrypoint**: Runs migrations automatically (`node build/migrate.mjs`) on startup before launching SvelteKit (`exec node build/index.js`).
+- **Entrypoint**: Applies migrations automatically (`pnpm exec drizzle-kit migrate`, using `DATABASE_PATH` from the environment via `drizzle.config.ts`) on startup before launching SvelteKit (`exec node build/index.js`).
 
 ### Docker Compose & Security Hardening (`docker-compose.yml`)
 
