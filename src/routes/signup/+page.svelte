@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { authClient } from '$lib/auth-client';
+	import { resolve } from '$app/paths';
 
 	let name = $state('');
 	let email = $state('');
@@ -26,7 +27,7 @@
 				// successful signup
 				signupSuccess = true;
 			}
-		} catch (err) {
+		} catch {
 			errorMsg = 'An unexpected error occurred.';
 		} finally {
 			loading = false;
@@ -43,26 +44,41 @@
 		class="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-2xl"
 	>
 		{#if signupSuccess}
-			<div class="flex flex-col items-center text-center animate-fade-in">
-				<div class="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-lg shadow-emerald-500/5">
-					<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-8 w-8 animate-bounce-slow">
-						<path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+			<div class="animate-fade-in flex flex-col items-center text-center">
+				<div
+					class="mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 shadow-lg shadow-emerald-500/5"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke-width="2"
+						stroke="currentColor"
+						class="animate-bounce-slow h-8 w-8"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
+						/>
 					</svg>
 				</div>
-				<h1 class="font-outfit text-3xl font-bold tracking-tight text-white mb-2">Check your email</h1>
-				<p class="text-sm text-gray-400 font-medium">Account registration was successful.</p>
-				
+				<h1 class="font-outfit mb-2 text-3xl font-bold tracking-tight text-white">
+					Check your email
+				</h1>
+				<p class="text-sm font-medium text-gray-400">Account registration was successful.</p>
+
 				<div class="my-6 w-full border-t border-white/10"></div>
-				
-				<p class="text-gray-300 text-sm leading-relaxed mb-8">
-					We've sent a verification link to:<br/>
-					<span class="font-semibold text-indigo-400 break-all">{email.trim()}</span><br/><br/>
+
+				<p class="mb-8 text-sm leading-relaxed text-gray-300">
+					We've sent a verification link to:<br />
+					<span class="font-semibold break-all text-indigo-400">{email.trim()}</span><br /><br />
 					Please check your inbox (and spam folder) and click the link to activate your account.
 				</p>
-				
+
 				<div class="w-full">
 					<a
-						href="/login"
+						href={resolve('/login')}
 						class="font-outfit block w-full rounded-2xl bg-indigo-600 px-4 py-3.5 text-center text-sm font-bold text-white transition hover:bg-indigo-500 hover:shadow-lg hover:shadow-indigo-600/20 active:scale-[0.98]"
 					>
 						Back to Login
@@ -151,8 +167,9 @@
 
 			<p class="mt-8 text-center text-sm text-gray-500">
 				Already have an account?
-				<a href="/login" class="font-semibold text-indigo-400 transition hover:text-indigo-300"
-					>Sign in</a
+				<a
+					href={resolve('/login')}
+					class="font-semibold text-indigo-400 transition hover:text-indigo-300">Sign in</a
 				>
 			</p>
 		{/if}
@@ -172,7 +189,8 @@
 	}
 
 	@keyframes bounceSlow {
-		0%, 100% {
+		0%,
+		100% {
 			transform: translateY(0);
 		}
 		50% {

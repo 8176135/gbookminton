@@ -222,7 +222,13 @@ interface SeedEvent {
 	locked: boolean;
 }
 
-function makeEvent(cfg: SeedConfig, title: string, location: string, date: Date, locked: boolean): SeedEvent {
+function makeEvent(
+	cfg: SeedConfig,
+	title: string,
+	location: string,
+	date: Date,
+	locked: boolean
+): SeedEvent {
 	const deadline = new Date(date.getTime() - cfg.deadlineHoursBefore * 60 * 60 * 1000);
 	return {
 		id: crypto.randomUUID(),
@@ -488,8 +494,18 @@ async function configure(): Promise<SeedConfig> {
 	cfg.adminEmail = await askText('Admin email', DEFAULTS.adminEmail);
 	cfg.adminPassword = await askText('Admin password', DEFAULTS.adminPassword);
 	cfg.companyDomain = await askText('Company email domain', DEFAULTS.companyDomain);
-	cfg.companyUserCount = await askNumber('Number of Company members', DEFAULTS.companyUserCount, 0, 50);
-	cfg.plusOneUserCount = await askNumber('Number of Plus One / guest members', DEFAULTS.plusOneUserCount, 0, 50);
+	cfg.companyUserCount = await askNumber(
+		'Number of Company members',
+		DEFAULTS.companyUserCount,
+		0,
+		50
+	);
+	cfg.plusOneUserCount = await askNumber(
+		'Number of Plus One / guest members',
+		DEFAULTS.plusOneUserCount,
+		0,
+		50
+	);
 	cfg.userPassword = await askText('Shared password for all members', DEFAULTS.userPassword);
 	const startingBalance = await askNumber(
 		`Starting balance per member ($)`,
@@ -510,15 +526,30 @@ async function configure(): Promise<SeedConfig> {
 		12
 	);
 	cfg.capacity = await askNumber('Event capacity', DEFAULTS.capacity, 1, 500);
-	cfg.durationMinutes = await askNumber('Event duration (minutes)', DEFAULTS.durationMinutes, 15, 600);
+	cfg.durationMinutes = await askNumber(
+		'Event duration (minutes)',
+		DEFAULTS.durationMinutes,
+		15,
+		600
+	);
 	cfg.deadlineHoursBefore = await askNumber(
 		'Signup deadline (hours before event)',
 		DEFAULTS.deadlineHoursBefore,
 		0,
 		24 * 30
 	);
-	const costCompany = await askNumber(`Cost for Company members ($)`, DEFAULTS.costCompanyCents / 100, 0, 1000);
-	const costPlusOne = await askNumber(`Cost for Plus One members ($)`, DEFAULTS.costPlusOneCents / 100, 0, 1000);
+	const costCompany = await askNumber(
+		`Cost for Company members ($)`,
+		DEFAULTS.costCompanyCents / 100,
+		0,
+		1000
+	);
+	const costPlusOne = await askNumber(
+		`Cost for Plus One members ($)`,
+		DEFAULTS.costPlusOneCents / 100,
+		0,
+		1000
+	);
 	cfg.costCompanyCents = dollarsToCents(costCompany);
 	cfg.costPlusOneCents = dollarsToCents(costPlusOne);
 	cfg.visibility = await askSelect(
@@ -599,7 +630,9 @@ async function main(): Promise<void> {
 	console.log(`  Admin login:   ${cfg.adminEmail}  /  ${cfg.adminPassword}`);
 	console.log(`  Members:       ${userCount - 1} accounts, password: ${cfg.userPassword}`);
 	console.log(`  Company domain: ${cfg.companyDomain}`);
-	console.log(`  Events:        ${eventCount}  (${cfg.pastCount} past, ${cfg.upcomingCount} upcoming, ${cfg.weeklyRecurrences} weekly)`);
+	console.log(
+		`  Events:        ${eventCount}  (${cfg.pastCount} past, ${cfg.upcomingCount} upcoming, ${cfg.weeklyRecurrences} weekly)`
+	);
 	console.log(`  Signups:       ${signupCount}`);
 	console.log('='.repeat(64));
 	console.log();

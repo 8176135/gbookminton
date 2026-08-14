@@ -2,6 +2,7 @@
 	import { authClient } from '$lib/auth-client';
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import LocalDate from '$lib/components/LocalDate.svelte';
 	import type { PageProps } from './$types';
 
@@ -83,7 +84,7 @@
 				nameSuccess = 'Name updated successfully.';
 				await invalidateAll();
 			}
-		} catch (err) {
+		} catch {
 			nameError = 'An unexpected error occurred.';
 		} finally {
 			nameLoading = false;
@@ -114,7 +115,7 @@
 				newPassword = '';
 				confirmPassword = '';
 			}
-		} catch (err) {
+		} catch {
 			passwordError = 'An unexpected error occurred.';
 		} finally {
 			passwordLoading = false;
@@ -397,7 +398,7 @@
 						</div>
 					{:else}
 						<div class="space-y-3">
-							{#each data.invitedPlusOnes as guest}
+							{#each data.invitedPlusOnes as guest (guest.id)}
 								<div
 									class="flex items-center justify-between rounded-2xl border border-white/5 bg-white/5 p-4 transition hover:border-white/10 hover:bg-white/10"
 								>
@@ -465,10 +466,10 @@
 								return async ({ result, update }) => {
 									inviteLoading = false;
 									if (result.type === 'failure' && result.data) {
-										const data = result.data as any;
+										const data = result.data as { error?: string; message?: string };
 										if (data.error) inviteError = data.error;
 									} else if (result.type === 'success' && result.data) {
-										const data = result.data as any;
+										const data = result.data as { error?: string; message?: string };
 										if (data.message) {
 											inviteSuccess = data.message;
 											plusOneName = '';
@@ -583,7 +584,7 @@
 					return async ({ update, result }) => {
 						adminLoading = false;
 						if (result.type === 'failure' && result.data) {
-							const data = result.data as any;
+							const data = result.data as { error?: string };
 							if (data.error) adminError = data.error;
 						}
 						update();
@@ -652,10 +653,13 @@
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-white/5">
-						{#each pastEvents as ev}
+						{#each pastEvents as ev (ev.id)}
 							<tr class="transition hover:bg-white/5">
 								<td class="px-6 py-4">
-									<a href="/events/{ev.id}" class="font-medium text-white hover:text-indigo-300">
+									<a
+										href={resolve(`/events/${ev.id}`)}
+										class="font-medium text-white hover:text-indigo-300"
+									>
 										{ev.title}
 									</a>
 								</td>

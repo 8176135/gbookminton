@@ -6,7 +6,7 @@ import type { RequestHandler } from './$types';
 
 import { env } from '$env/dynamic/private';
 
-function escapeCsv(val: any): string {
+function escapeCsv(val: unknown): string {
 	if (val === null || val === undefined) return '';
 	const str = String(val);
 	if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
@@ -107,7 +107,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 				Expires: '0'
 			}
 		});
-	} catch (err: any) {
+	} catch (err) {
 		console.error('Failed to export transactions CSV:', err);
 		throw error(500, 'Failed to generate transaction CSV export');
 	}

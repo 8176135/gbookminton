@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { authClient } from '$lib/auth-client';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 
 	interface Props {
 		data: { token: string };
@@ -33,9 +34,9 @@
 				errorMsg = error.message ?? 'An unknown error occurred.';
 			} else {
 				successMsg = 'Your password has been reset successfully. Redirecting to login...';
-				setTimeout(() => goto('/login'), 2000);
+				setTimeout(() => goto(resolve('/login')), 2000);
 			}
-		} catch (err) {
+		} catch {
 			errorMsg = 'An unexpected error occurred.';
 		} finally {
 			loading = false;

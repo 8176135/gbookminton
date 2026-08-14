@@ -69,10 +69,16 @@ export const load = (async ({ locals, params }) => {
 			signups.find((s) => s.signup.userId === session.user.id)?.signup.status ?? null,
 		currentUser: { balance: currentUser.balance, accountType: currentUser.accountType },
 		adminSettings: isAdmin
-			? {
-					days: (session.user as any).adminDeadlineDays ?? 2,
-					time: (session.user as any).adminDeadlineTime ?? '17:00'
-				}
+			? (() => {
+					const adminUser = session.user as unknown as {
+						adminDeadlineDays?: number;
+						adminDeadlineTime?: string;
+					};
+					return {
+						days: adminUser.adminDeadlineDays ?? 2,
+						time: adminUser.adminDeadlineTime ?? '17:00'
+					};
+				})()
 			: undefined
 	};
 }) satisfies PageServerLoad;

@@ -34,8 +34,9 @@ export async function runBackupSnapshot() {
 		const tempHash = createHash('sha256').update(tempBuffer).digest('hex');
 
 		// Find the latest snapshot in the backup directory
-		const files = fs.readdirSync(backupsDir)
-			.filter(f => f.startsWith('snapshot_') && f.endsWith('.db'))
+		const files = fs
+			.readdirSync(backupsDir)
+			.filter((f) => f.startsWith('snapshot_') && f.endsWith('.db'))
 			.sort();
 
 		const latestFile = files[files.length - 1];
@@ -61,8 +62,9 @@ export async function runBackupSnapshot() {
 		console.log(`Successfully created a new SQLite database snapshot: ${finalBackupPath}`);
 
 		// 4. Clean up older backups (keep last 7 copies)
-		const updatedFiles = fs.readdirSync(backupsDir)
-			.filter(f => f.startsWith('snapshot_') && f.endsWith('.db'))
+		const updatedFiles = fs
+			.readdirSync(backupsDir)
+			.filter((f) => f.startsWith('snapshot_') && f.endsWith('.db'))
 			.sort();
 		if (updatedFiles.length > 7) {
 			const filesToDelete = updatedFiles.slice(0, updatedFiles.length - 7);

@@ -78,7 +78,7 @@ export const actions: Actions = {
 		}
 
 		// Basic validation
-		if (!/^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,}$/i.test(domain)) {
+		if (!/^[a-z0-9]+([-.]{1}[a-z0-9]+)*\.[a-z]{2,}$/i.test(domain)) {
 			return fail(400, {
 				error: 'Invalid domain format',
 				domainError: 'Invalid domain format (e.g., example.com)'

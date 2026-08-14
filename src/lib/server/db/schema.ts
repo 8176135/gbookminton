@@ -16,6 +16,7 @@ export const user = sqliteTable('user', {
 	accountType: text('accountType').notNull().default('plusone'), // enum values: company, plusone
 	adminDeadlineDays: integer('adminDeadlineDays').notNull().default(2),
 	adminDeadlineTime: text('adminDeadlineTime').notNull().default('17:00'),
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- breaks circular self-reference type inference
 	invitedById: text('invitedById').references((): any => user.id),
 	allowedPlusOnes: integer('allowedPlusOnes').notNull().default(1)
 });

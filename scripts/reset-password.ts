@@ -2,6 +2,7 @@ import { db } from '../src/lib/server/db';
 import { user, account } from '../src/lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { hashPassword } from 'better-auth/crypto';
+import { createInterface } from 'node:readline';
 
 // Setup basic command line options
 const args = process.argv.slice(2);
@@ -9,7 +10,7 @@ const cliEmail = args[0];
 const cliPassword = args[1];
 
 function prompt(query: string): Promise<string> {
-	const rl = require('readline').createInterface({
+	const rl = createInterface({
 		input: process.stdin,
 		output: process.stdout
 	});
@@ -37,7 +38,7 @@ async function main() {
 	console.log();
 
 	let selectedUser: typeof user.$inferSelect | null = null;
-	let newPassword = '';
+	let newPassword: string;
 
 	if (cliEmail) {
 		// CLI Argument mode

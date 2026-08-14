@@ -37,7 +37,13 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 
 	// Get invited plus-ones
-	let invitedPlusOnes: any[] = [];
+	let invitedPlusOnes: Array<{
+		id: string;
+		name: string;
+		email: string;
+		balance: number;
+		createdAt: Date;
+	}> = [];
 	if (currentUser.accountType === 'company' || currentUser.role === 'admin') {
 		invitedPlusOnes = await db
 			.select({
@@ -253,7 +259,7 @@ export const actions: Actions = {
 				inviteSuccess: true,
 				message: `Plus-One '${plusOneName}' was invited successfully!`
 			};
-		} catch (err: any) {
+		} catch (err) {
 			console.error('Error inviting plusone:', err);
 			return fail(500, { error: 'Failed to complete plus-one invitation.' });
 		}

@@ -109,18 +109,20 @@ Ensure you have the following environment variables in your `.env`:
 
 ## 🐳 Docker Deployment
 
-Gbookminton is containerized using a multi-stage Docker build optimized for SvelteKit, Node.js, and SQLite, running under a highly locked-down Docker Compose architecture. 
+Gbookminton is containerized using a multi-stage Docker build optimized for SvelteKit, Node.js, and SQLite, running under a highly locked-down Docker Compose architecture.
 
 The container is hardened with state-of-the-art security settings:
-* **Non-Root User Execution**: Runs as user `1000:1000` (matching the `node` user in the container and the default UID on host platforms) to ensure secure file permissions and eliminate host-escalation vulnerabilities.
-* **Read-Only Root Filesystem**: The container OS filesystem is mounted as read-only (`read_only: true`), preventing any malicious runtime modifications to SvelteKit or server binaries.
-* **Dropped Capabilities**: Drops all default Linux kernel privileges (`cap_drop: [ALL]`) since no root-level functions are required.
-* **Privilege Escalation Blocked**: Prevents child processes from obtaining new privileges (`security_opt: [no-new-privileges:true]`).
-* **Resource Constraints**: Limits CPU and memory consumption to prevent DoS exploits.
+
+- **Non-Root User Execution**: Runs as user `1000:1000` (matching the `node` user in the container and the default UID on host platforms) to ensure secure file permissions and eliminate host-escalation vulnerabilities.
+- **Read-Only Root Filesystem**: The container OS filesystem is mounted as read-only (`read_only: true`), preventing any malicious runtime modifications to SvelteKit or server binaries.
+- **Dropped Capabilities**: Drops all default Linux kernel privileges (`cap_drop: [ALL]`) since no root-level functions are required.
+- **Privilege Escalation Blocked**: Prevents child processes from obtaining new privileges (`security_opt: [no-new-privileges:true]`).
+- **Resource Constraints**: Limits CPU and memory consumption to prevent DoS exploits.
 
 ### 🚀 Easiest Way: Single Command Up
 
 To automatically build the image, configure container security constraints, load environmental variables from `.env`, and start the application in detached mode:
+
 ```bash
 pnpm docker:up
 ```
@@ -132,20 +134,25 @@ pnpm docker:up
 If you prefer to run commands individually, you can use the following scripts:
 
 #### 1. Build the Container Image
+
 ```bash
 pnpm docker:build
 # Or raw command: docker compose build
 ```
 
 #### 2. Run the Container (Detached)
+
 This launches the container using the security profiles defined in `docker-compose.yml`, binds the local `./data` directory for SQLite persistence, and loads `.env` variables.
+
 ```bash
 pnpm docker:run
 # Or raw command: docker compose up -d
 ```
 
 #### 3. Stop and Remove the Container
+
 This gracefully shuts down the container, stops the server, and cleans up temporary resources.
+
 ```bash
 pnpm docker:stop
 # Or raw command: docker compose down

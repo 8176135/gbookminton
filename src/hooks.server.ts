@@ -11,9 +11,15 @@ import { companyDomain } from '$lib/server/db/schema';
 let activeRequestsCount = 0;
 let isShuttingDown = false;
 
+interface GlobalWithPoller {
+	upPollerStarted?: boolean;
+}
+
+const globalState = globalThis as GlobalWithPoller;
+
 // Start background poller once (handles HMR reloads in dev properly)
-if (!(globalThis as any).upPollerStarted && !building) {
-	(globalThis as any).upPollerStarted = true;
+if (!globalState.upPollerStarted && !building) {
+	globalState.upPollerStarted = true;
 
 	// Initial runs
 	pollUpBankTransactions();
@@ -97,7 +103,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 						}
 					);
 				}
-			} catch (err) {
+			} catch {
 				// Let standard handlers handle malformed requests
 			}
 		}

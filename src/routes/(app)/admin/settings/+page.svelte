@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { resolve } from '$app/paths';
 	import type { PageProps } from './$types';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
@@ -30,7 +31,7 @@
 		<header class="mb-8">
 			<div class="mb-6 flex items-center gap-4">
 				<a
-					href="/admin"
+					href={resolve('/admin')}
 					class="rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-300 transition hover:bg-gray-700"
 				>
 					Back to Dashboard
@@ -71,7 +72,7 @@
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-gray-800">
-						{#each domains as d}
+						{#each domains as d (d.id)}
 							<tr class="transition hover:bg-gray-800/30">
 								<td class="px-6 py-4 font-medium text-white">{d.domain}</td>
 								<td class="px-6 py-4">{new Date(d.createdAt).toLocaleDateString()}</td>

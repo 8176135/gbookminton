@@ -68,7 +68,7 @@
 					</tr>
 				</thead>
 				<tbody class="divide-y divide-gray-800">
-					{#each users as u}
+					{#each users as u (u.id)}
 						<tr class="transition hover:bg-gray-800/30">
 							<td class="px-6 py-4 font-medium text-white">{u.name}</td>
 							<td class="px-6 py-4">{u.email}</td>

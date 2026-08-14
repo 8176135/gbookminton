@@ -88,8 +88,7 @@
 		const days = adminSettings?.days ?? 2;
 		const time = adminSettings?.time ?? '17:00';
 
-		let d = new Date(eventDateValue.year, eventDateValue.month - 1, eventDateValue.day);
-		d.setDate(d.getDate() - days);
+		let d = new Date(eventDateValue.year, eventDateValue.month - 1, eventDateValue.day - days);
 		eventDeadlineValue = new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate());
 		eventDeadlineTimeValue = time;
 	}

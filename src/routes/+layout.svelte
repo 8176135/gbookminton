@@ -3,10 +3,13 @@
 	import { authClient } from '$lib/auth-client';
 	import { page } from '$app/state';
 	import { goto, invalidateAll } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import type { Snippet } from 'svelte';
+	import type { LayoutData } from './$types';
 
 	interface Props {
-		children: import('svelte').Snippet;
-		data: any;
+		children: Snippet;
+		data: LayoutData;
 	}
 
 	let { children, data }: Props = $props();
@@ -15,7 +18,7 @@
 	const handleLogout = async () => {
 		await authClient.signOut();
 		await invalidateAll();
-		goto('/login');
+		goto(resolve('/login'));
 	};
 </script>
 
@@ -48,7 +51,7 @@
 			<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 				<div class="flex h-16 items-center justify-between">
 					<div class="flex items-center gap-8">
-						<a href="/dashboard" class="flex items-center gap-2">
+						<a href={resolve('/dashboard')} class="flex items-center gap-2">
 							<div
 								class="font-outfit flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 font-bold text-white shadow-lg shadow-indigo-600/20"
 							>
@@ -62,7 +65,7 @@
 
 						<div class="hidden items-center gap-1 md:flex">
 							<a
-								href="/dashboard"
+								href={resolve('/dashboard')}
 								class="rounded-lg px-4 py-2 text-sm font-medium transition {page.url.pathname.includes(
 									'/dashboard'
 								)
@@ -73,7 +76,7 @@
 							</a>
 							{#if session.user.role === 'admin'}
 								<a
-									href="/admin"
+									href={resolve('/admin')}
 									class="rounded-lg px-4 py-2 text-sm font-medium transition {page.url.pathname.includes(
 										'/admin'
 									)
@@ -88,7 +91,7 @@
 
 					<div class="flex items-center gap-4">
 						<a
-							href="/account"
+							href={resolve('/account')}
 							class="hidden flex-col items-end transition hover:opacity-80 sm:flex"
 						>
 							<span class="text-xs font-medium tracking-wider text-gray-500 uppercase">Account</span

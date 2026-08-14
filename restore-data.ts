@@ -1,5 +1,9 @@
 import Database from 'better-sqlite3';
 
+interface ColumnInfo {
+	name: string;
+}
+
 console.log('Attaching backup database...');
 const sqlite = new Database('local.db');
 sqlite.exec("ATTACH DATABASE 'local.db.backup' AS backup");
@@ -18,12 +22,14 @@ const tables = [
 for (const table of tables) {
 	try {
 		// 1. Get column list from the new database
-		const newColsQuery = sqlite.prepare(`PRAGMA table_info("${table}")`).all() as any[];
+		const newColsQuery = sqlite.prepare(`PRAGMA table_info("${table}")`).all() as ColumnInfo[];
 		if (newColsQuery.length === 0) continue; // Table doesn't exist
 		const newCols = newColsQuery.map((c) => c.name);
 
 		// 2. Get column list from the backup database
-		const oldColsQuery = sqlite.prepare(`PRAGMA backup.table_info("${table}")`).all() as any[];
+		const oldColsQuery = sqlite
+			.prepare(`PRAGMA backup.table_info("${table}")`)
+			.all() as ColumnInfo[];
 		if (oldColsQuery.length === 0) continue; // Table didn't exist in backup
 		const oldCols = oldColsQuery.map((c) => c.name);
 
@@ -38,8 +44,9 @@ for (const table of tables) {
 			);
 			console.log(`✅ Restored data for table: ${table} (${commonCols.length} matching columns)`);
 		}
-	} catch (e: any) {
-		console.error(`❌ Failed to restore ${table}:`, e.message);
+	} catch (e) {
+		const message = e instanceof Error ? e.message : String(e);
+		console.error(`❌ Failed to restore ${table}:`, message);
 	}
 }
 

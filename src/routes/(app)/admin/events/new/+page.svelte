@@ -1,5 +1,6 @@
 <script lang="ts">
 	import EventForm from '$lib/components/EventForm.svelte';
+	import { resolve } from '$app/paths';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
@@ -12,7 +13,9 @@
 <div class="min-h-screen bg-gray-950 p-6 text-white">
 	<div class="mx-auto max-w-2xl">
 		<header class="mb-8">
-			<a href="/admin" class="mb-2 inline-block text-sm text-indigo-400 hover:text-indigo-300"
+			<a
+				href={resolve('/admin')}
+				class="mb-2 inline-block text-sm text-indigo-400 hover:text-indigo-300"
 				>← Back to Dashboard</a
 			>
 			<h1 class="text-3xl font-bold tracking-tight text-white">Create New Event</h1>
@@ -36,7 +39,7 @@
 				}}
 			>
 				<option value="">-- No template (start from scratch) --</option>
-				{#each data.events as ev}
+				{#each data.events as ev (ev.id)}
 					<option value={ev.id} selected={data.templateEvent?.id === ev.id}>
 						{ev.title} ({new Date(ev.date).toLocaleDateString(undefined, {
 							month: 'short',

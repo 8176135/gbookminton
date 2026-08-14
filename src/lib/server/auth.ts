@@ -17,7 +17,6 @@ if (!building) {
 	}
 }
 
-
 export const auth = betterAuth({
 	// Vite sets NODE_ENV=production during `vite build`, and better-auth refuses a
 	// default/invalid secret under production. During the SvelteKit build the server

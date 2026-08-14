@@ -63,6 +63,7 @@
 </script>
 
 {#if href}
+	<!-- eslint-disable svelte/no-navigation-without-resolve -- generic link component accepts arbitrary href strings not expressible as the route-typed resolve() -->
 	<a
 		bind:this={ref}
 		data-slot="button"
@@ -75,6 +76,7 @@
 	>
 		{@render children?.()}
 	</a>
+	<!-- eslint-enable svelte/no-navigation-without-resolve -->
 {:else}
 	<button
 		bind:this={ref}

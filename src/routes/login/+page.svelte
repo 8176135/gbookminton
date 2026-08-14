@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { authClient } from '$lib/auth-client';
 	import { goto, invalidateAll } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 
 	let email = $state('');
@@ -25,9 +26,9 @@
 			} else {
 				// successful login
 				await invalidateAll();
-				goto('/dashboard');
+				goto(resolve('/dashboard'));
 			}
-		} catch (err) {
+		} catch {
 			errorMsg = 'An unexpected error occurred.';
 		} finally {
 			loading = false;
@@ -55,15 +56,28 @@
 
 		{#if isVerified}
 			<div
-				class="mb-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-center text-sm text-emerald-400 animate-fade-in flex flex-col items-center gap-1.5"
+				class="animate-fade-in mb-6 flex flex-col items-center gap-1.5 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-center text-sm text-emerald-400"
 			>
 				<div class="flex items-center gap-2 font-semibold">
-					<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-5 w-5">
-						<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke-width="2.5"
+						stroke="currentColor"
+						class="h-5 w-5"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+						/>
 					</svg>
 					Email Verified!
 				</div>
-				<p class="text-xs text-emerald-400/80">Your email has been successfully verified. You can now log in below.</p>
+				<p class="text-xs text-emerald-400/80">
+					Your email has been successfully verified. You can now log in below.
+				</p>
 			</div>
 		{/if}
 
@@ -100,7 +114,7 @@
 						>Password</label
 					>
 					<a
-						href="/forgot-password"
+						href={resolve('/forgot-password')}
 						tabindex="-1"
 						class="text-xs font-medium text-indigo-400 hover:text-indigo-300">Forgot?</a
 					>
@@ -126,8 +140,9 @@
 
 		<p class="mt-8 text-center text-sm text-gray-500">
 			New to Gbookminton?
-			<a href="/signup" class="font-semibold text-indigo-400 transition hover:text-indigo-300"
-				>Create an account</a
+			<a
+				href={resolve('/signup')}
+				class="font-semibold text-indigo-400 transition hover:text-indigo-300">Create an account</a
 			>
 		</p>
 	</div>

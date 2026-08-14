@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { authClient } from '$lib/auth-client';
+	import { resolve } from '$app/paths';
 
 	let email = $state('');
 	let loading = $state(false);
@@ -22,7 +23,7 @@
 			} else {
 				successMsg = 'If an account exists for that email, a password reset link has been sent.';
 			}
-		} catch (err) {
+		} catch {
 			errorMsg = 'An unexpected error occurred.';
 		} finally {
 			loading = false;
@@ -94,8 +95,9 @@
 
 		<p class="mt-8 text-center text-sm text-gray-500">
 			Remembered your password?
-			<a href="/login" class="font-semibold text-indigo-400 transition hover:text-indigo-300"
-				>Back to login</a
+			<a
+				href={resolve('/login')}
+				class="font-semibold text-indigo-400 transition hover:text-indigo-300">Back to login</a
 			>
 		</p>
 	</div>

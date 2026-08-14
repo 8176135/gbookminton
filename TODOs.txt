@@ -31,3 +31,16 @@ Default to OnlyCompany. As the name implies, it should show who have joined to a
 
 
 Create another testing script that can add funds to an account (similar to the reset-password script for choosing accounts). It should add a new transaction. 
+
+
+When clicking on an event show loading.
+
+The admin should be able to add or remove people, ignoring waitlist limits
+Admin should be able to set invite limits.
+Buttons should change the cursor appropriately.
+Editing event size should unwaitlist people appropriately.
+Shrinking event size should notify the admin who will be removed.
+
+
+Account balance history should be viewable by each person.
+Account balance history for everybody should be viewable by admin.

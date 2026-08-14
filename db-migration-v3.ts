@@ -1,5 +1,12 @@
 import Database from 'better-sqlite3';
 
+interface UserRow {
+	id: string;
+	name: string;
+	email: string;
+	accountType: string;
+}
+
 console.log('Running database migration v3...');
 const sqlite = new Database('local.db');
 
@@ -14,11 +21,12 @@ for (const { table, column, def } of columnsToAdd) {
 	try {
 		sqlite.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${def}`);
 		console.log(`✅ Added column '${column}' to '${table}'`);
-	} catch (e: any) {
-		if (e.message.includes('duplicate column')) {
+	} catch (e) {
+		const message = e instanceof Error ? e.message : String(e);
+		if (message.includes('duplicate column')) {
 			console.log(`✓ Column '${column}' already exists in '${table}', skipping.`);
 		} else {
-			console.error(`❌ Error adding '${column}' to '${table}':`, e.message);
+			console.error(`❌ Error adding '${column}' to '${table}':`, message);
 		}
 	}
 }
@@ -28,7 +36,7 @@ try {
 	// Find first admin
 	const admins = sqlite
 		.prepare("SELECT id, name, email, accountType FROM user WHERE role = 'admin'")
-		.all() as any[];
+		.all() as UserRow[];
 
 	if (admins.length === 0) {
 		console.log('⚠️ No admin users found in database to assign existing plus-ones to.');
@@ -40,9 +48,9 @@ try {
 		);
 
 		// Set default admin allowedPlusOnes to 999999 (infinite invites) and accountType to company
-		sqlite.prepare("UPDATE user SET allowedPlusOnes = 999999, accountType = 'company' WHERE id = ?").run(
-			defaultAdmin.id
-		);
+		sqlite
+			.prepare("UPDATE user SET allowedPlusOnes = 999999, accountType = 'company' WHERE id = ?")
+			.run(defaultAdmin.id);
 		console.log(
 			`✅ Updated admin '${defaultAdmin.name}' invite limit to 999999 and accountType to 'company'.`
 		);
@@ -52,7 +60,7 @@ try {
 			.prepare(
 				"SELECT id, name, email FROM user WHERE accountType = 'plusone' AND (invitedById IS NULL OR invitedById = '')"
 			)
-			.all() as any[];
+			.all() as UserRow[];
 
 		console.log(
 			`🔍 Found ${uninvitedPlusones.length} existing plus-one user(s) without an inviter.`
@@ -68,8 +76,9 @@ try {
 			);
 		}
 	}
-} catch (e: any) {
-	console.error('❌ Data migration error:', e.message);
+} catch (e) {
+	const message = e instanceof Error ? e.message : String(e);
+	console.error('❌ Data migration error:', message);
 }
 
 sqlite.close();

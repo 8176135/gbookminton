@@ -5,5 +5,15 @@ yarn.lock
 bun.lock
 bun.lockb
 
+# Tooling / build output
+/.kilo/
+/node_modules/
+/.svelte-kit/
+/build/
+/.vscode/
+
 # Miscellaneous
 /static/
+
+# Generated DB migrations (Drizzle snapshots)
+/src/lib/server/db/migrations/

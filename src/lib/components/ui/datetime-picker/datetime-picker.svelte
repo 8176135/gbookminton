@@ -178,14 +178,14 @@
 
 				<!-- Week Days -->
 				<div class="text-muted-foreground mb-2 grid grid-cols-7 gap-1 text-center text-xs">
-					{#each weekDays as day}
+					{#each weekDays as day, i (i)}
 						<div class="py-1">{day}</div>
 					{/each}
 				</div>
 
 				<!-- Days -->
 				<div class="grid grid-cols-7 gap-1">
-					{#each days as day}
+					{#each days as day, i (i)}
 						<button
 							type="button"
 							onclick={() => day && selectDate(day)}

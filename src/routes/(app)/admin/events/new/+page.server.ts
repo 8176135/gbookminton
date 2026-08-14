@@ -6,13 +6,12 @@ import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const session = locals.session;
-	// @ts-ignore - Better Auth custom fields (temporary until sync)
 	if (!session || session.user.role !== 'admin') {
 		throw redirect(302, '/dashboard');
 	}
 
 	const templateId = url.searchParams.get('templateId');
-	let templateEvent: any = null;
+	let templateEvent: typeof event.$inferSelect | null = null;
 	if (templateId) {
 		const [found] = await db.select().from(event).where(eq(event.id, templateId)).limit(1);
 		if (found) {
@@ -32,10 +31,15 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 	const allEvents = await db.select().from(event).orderBy(desc(event.date));
 
+	const adminUser = session.user as unknown as {
+		adminDeadlineDays?: number;
+		adminDeadlineTime?: string;
+	};
+
 	return {
 		adminSettings: {
-			days: (session.user as any).adminDeadlineDays ?? 2,
-			time: (session.user as any).adminDeadlineTime ?? '17:00'
+			days: adminUser.adminDeadlineDays ?? 2,
+			time: adminUser.adminDeadlineTime ?? '17:00'
 		},
 		events: allEvents,
 		templateEvent
@@ -45,7 +49,6 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
 		const session = locals.session;
-		// @ts-ignore
 		if (!session || session.user.role !== 'admin') {
 			throw redirect(302, '/login');
 		}

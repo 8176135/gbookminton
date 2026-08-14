@@ -25,16 +25,16 @@ Gbookminton is a full-stack web application for managing group memberships and t
 
 ### Stack
 
-| Layer     | Technology                            |
-| --------- | ------------------------------------- |
-| Framework | SvelteKit 5 (SSR + client) via `@sveltejs/adapter-node` |
-| Runtime   | Node.js (>= 22)                       |
+| Layer     | Technology                                                                  |
+| --------- | --------------------------------------------------------------------------- |
+| Framework | SvelteKit 5 (SSR + client) via `@sveltejs/adapter-node`                     |
+| Runtime   | Node.js (>= 22)                                                             |
 | Database  | SQLite via `better-sqlite3` + Drizzle ORM (custom path via `DATABASE_PATH`) |
-| Packaging | pnpm (bun removed; see `packageManager` in package.json) |
-| Styling   | Tailwind CSS v4                       |
-| Auth      | BetterAuth                            |
-| Build     | Vite                                  |
-| Types     | TypeScript (strict)                   |
+| Packaging | pnpm (bun removed; see `packageManager` in package.json)                    |
+| Styling   | Tailwind CSS v4                                                             |
+| Auth      | BetterAuth                                                                  |
+| Build     | Vite                                                                        |
+| Types     | TypeScript (strict)                                                         |
 
 ### Directory Structure
 
@@ -225,11 +225,12 @@ pnpm build
 pnpm preview
 
 # Type checking
-pnpm check         # Single run
+pnpm check         # Single run (svelte-check; covers src/, scripts/, and root TS files)
 pnpm check:watch   # Watch mode
 
 # Code quality
-pnpm lint          # Prettier (check only)
+pnpm lint          # ESLint (Svelte + TypeScript recommended) then Prettier (check)
+pnpm lint:fix      # Auto-fix ESLint issues, then Prettier (write)
 pnpm format        # Prettier (write)
 
 # Database
@@ -413,15 +414,17 @@ export const actions = {
 
 ### Configuration
 
-| File                | Purpose                                       |
-| ------------------- | --------------------------------------------- |
-| `src/lib/types.ts`  | TypeScript enums for status/type/role         |
-| `src/app.d.ts`      | TypeScript types for `App.Locals`, `PageData` |
-| `src/app.css`       | Tailwind CSS v4 + dark mode + animations      |
-| `components.json`   | shadcn-svelte CLI configuration               |
-| `svelte.config.js`  | SvelteKit adapter configuration               |
-| `vite.config.ts`    | Vite + Tailwind plugin config                 |
-| `drizzle.config.ts` | Drizzle ORM configuration                     |
+| File                | Purpose                                                                            |
+| ------------------- | ---------------------------------------------------------------------------------- |
+| `src/lib/types.ts`  | TypeScript enums for status/type/role                                              |
+| `src/app.d.ts`      | TypeScript types for `App.Locals`, `PageData`                                      |
+| `src/app.css`       | Tailwind CSS v4 + dark mode + animations                                           |
+| `components.json`   | shadcn-svelte CLI configuration                                                    |
+| `svelte.config.js`  | SvelteKit adapter configuration                                                    |
+| `vite.config.ts`    | Vite + Tailwind plugin config                                                      |
+| `drizzle.config.ts` | Drizzle ORM configuration                                                          |
+| `eslint.config.js`  | ESLint flat config (Svelte + TS + Prettier)                                        |
+| `tsconfig.json`     | Strict TS compiler options; `include` covers `src/`, `scripts/`, and root TS files |
 
 ### Entry Points
 
@@ -478,6 +481,7 @@ Required variables (typically in `.env`):
 ### Docker Containerization
 
 Gbookminton is containerized using a highly optimized, two-stage Docker architecture:
+
 - **Build Stage**: Uses `node:22-slim` with pnpm to download dependencies (including `drizzle-kit`, which ships in the production image so migrations can run at startup) and run the production build (`pnpm build`).
 - **Run Stage**: Uses `node:22-slim` for minimal size. Runs strictly under the non-root `node` user (UID/GID 1000) for security.
 - **Entrypoint**: Applies migrations automatically (`pnpm exec drizzle-kit migrate`, using `DATABASE_PATH` from the environment via `drizzle.config.ts`) on startup before launching SvelteKit (`exec node build/index.js`).
@@ -485,16 +489,18 @@ Gbookminton is containerized using a highly optimized, two-stage Docker architec
 ### Docker Compose & Security Hardening (`docker-compose.yml`)
 
 The application is deployed using Docker Compose with extensive production security constraints:
-* **gVisor Sandbox Runtime**: Configured with `runtime: runsc` to execute the application within a highly secure sandbox kernel, isolating container execution from the host OS kernel.
-* **Signal Forwarding (Init)**: Configured with `init: true` to run Docker's built-in `tini` as PID 1, ensuring OS signals (`SIGINT`/`SIGTERM`) are correctly propagated to the child Node server process.
-* **Non-Root Execution**: Runs as user `1000:1000` (matching the host user and container `node` user) to prevent root escalation and solve SQLite filesystem permission issues.
-* **Read-Only Root Filesystem**: Mounted with `read_only: true` to block any runtime file tampering.
-* **Linux Capabilities Dropped**: Drops all kernel capabilities (`cap_drop: [ALL]`).
-* **No Privilege Escalation**: Restricts binary escalation (`security_opt: [no-new-privileges:true]`).
-* **Writable Tmpfs**: Maps `/tmp` to a temporary in-memory write space for server logging/processing.
-* **Resource Limits**: Caps limits at 1.0 CPU cores and 512MB RAM.
+
+- **gVisor Sandbox Runtime**: Configured with `runtime: runsc` to execute the application within a highly secure sandbox kernel, isolating container execution from the host OS kernel.
+- **Signal Forwarding (Init)**: Configured with `init: true` to run Docker's built-in `tini` as PID 1, ensuring OS signals (`SIGINT`/`SIGTERM`) are correctly propagated to the child Node server process.
+- **Non-Root Execution**: Runs as user `1000:1000` (matching the host user and container `node` user) to prevent root escalation and solve SQLite filesystem permission issues.
+- **Read-Only Root Filesystem**: Mounted with `read_only: true` to block any runtime file tampering.
+- **Linux Capabilities Dropped**: Drops all kernel capabilities (`cap_drop: [ALL]`).
+- **No Privilege Escalation**: Restricts binary escalation (`security_opt: [no-new-privileges:true]`).
+- **Writable Tmpfs**: Maps `/tmp` to a temporary in-memory write space for server logging/processing.
+- **Resource Limits**: Caps limits at 1.0 CPU cores and 512MB RAM.
 
 **Container Deployment Commands:**
+
 ```bash
 # Build the image via Compose
 pnpm docker:build  # Or: docker compose build

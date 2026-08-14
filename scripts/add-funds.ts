@@ -1,6 +1,7 @@
 import { db } from '../src/lib/server/db';
 import { user, balanceTransaction } from '../src/lib/server/db/schema';
 import { eq } from 'drizzle-orm';
+import { createInterface } from 'node:readline';
 
 // Setup basic command line options
 const args = process.argv.slice(2);
@@ -9,7 +10,7 @@ const cliAmountStr = args[1];
 const cliNotes = args[2];
 
 function prompt(query: string): Promise<string> {
-	const rl = require('readline').createInterface({
+	const rl = createInterface({
 		input: process.stdin,
 		output: process.stdout
 	});

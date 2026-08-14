@@ -10,14 +10,14 @@
 
 	const now = new Date();
 
-	function isPastEvent(ev: { date: string; duration: number }): boolean {
+	function isPastEvent(ev: { date: Date | string; duration: number }): boolean {
 		const endTime = new Date(new Date(ev.date).getTime() + ev.duration * 60 * 1000);
 		return endTime < now;
 	}
 
 	// Separate current/past for display when showPast is true
-	let currentEvents = $derived(showPast ? events.filter((ev: any) => !isPastEvent(ev)) : events);
-	let pastEvents = $derived(showPast ? events.filter((ev: any) => isPastEvent(ev)) : []);
+	let currentEvents = $derived(showPast ? events.filter((ev) => !isPastEvent(ev)) : events);
+	let pastEvents = $derived(showPast ? events.filter((ev) => isPastEvent(ev)) : []);
 </script>
 
 <svelte:head>
@@ -59,7 +59,7 @@
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-gray-800">
-						{#each events as ev}
+						{#each events as ev (ev.id)}
 							{@const counts = countMap[ev.id] || { enrolled: 0, waitlisted: 0 }}
 							<tr class="transition hover:bg-gray-800/30">
 								<td class="px-6 py-4 font-medium text-white">{ev.title}</td>
@@ -125,7 +125,7 @@
 								</tr>
 							</thead>
 							<tbody class="divide-y divide-gray-800">
-								{#each currentEvents as ev}
+								{#each currentEvents as ev (ev.id)}
 									{@const counts = countMap[ev.id] || { enrolled: 0, waitlisted: 0 }}
 									<tr class="transition hover:bg-gray-800/30">
 										<td class="px-6 py-4 font-medium text-white">{ev.title}</td>
@@ -185,7 +185,7 @@
 								</tr>
 							</thead>
 							<tbody class="divide-y divide-gray-800/50">
-								{#each pastEvents as ev}
+								{#each pastEvents as ev (ev.id)}
 									{@const counts = countMap[ev.id] || { enrolled: 0, waitlisted: 0 }}
 									<tr class="opacity-75 transition hover:bg-gray-800/20">
 										<td class="px-6 py-4 font-medium text-gray-300">{ev.title}</td>

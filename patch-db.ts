@@ -59,8 +59,9 @@ for (const { name, sql } of tablesToCreate) {
 	try {
 		sqlite.exec(sql);
 		console.log(`✅ Ensured table '${name}' exists.`);
-	} catch (e: any) {
-		console.error(`❌ Error creating table '${name}':`, e.message);
+	} catch (e) {
+		const message = e instanceof Error ? e.message : String(e);
+		console.error(`❌ Error creating table '${name}':`, message);
 	}
 }
 
@@ -69,11 +70,12 @@ for (const { table, column, def } of columnsToAdd) {
 	try {
 		sqlite.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${def}`);
 		console.log(`✅ Added column '${column}' to '${table}'`);
-	} catch (e: any) {
-		if (e.message.includes('duplicate column')) {
+	} catch (e) {
+		const message = e instanceof Error ? e.message : String(e);
+		if (message.includes('duplicate column')) {
 			console.log(`✓ Column '${column}' already exists in '${table}', skipping.`);
 		} else {
-			console.error(`❌ Error adding '${column}' to '${table}':`, e.message);
+			console.error(`❌ Error adding '${column}' to '${table}':`, message);
 		}
 	}
 }

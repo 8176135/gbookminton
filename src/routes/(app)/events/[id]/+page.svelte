@@ -4,6 +4,7 @@
 	import EventForm from '$lib/components/EventForm.svelte';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import { resolve } from '$app/paths';
 
 	let { data, form }: PageProps = $props();
 	let ev = $derived(data.event);
@@ -72,7 +73,7 @@
 		<!-- Header -->
 		<header class="mb-8">
 			<a
-				href={isAdmin ? '/admin' : '/dashboard'}
+				href={isAdmin ? resolve('/admin') : resolve('/dashboard')}
 				class="mb-3 inline-flex items-center gap-1.5 text-sm text-indigo-400 transition hover:text-indigo-300"
 			>
 				← Back to {isAdmin ? 'Admin Dashboard' : 'Dashboard'}
@@ -187,7 +188,7 @@
 						</div>
 					{:else}
 						<ul class="divide-y divide-gray-800">
-							{#each listed as player}
+							{#each listed as player (player.signup.id)}
 								<li class="flex items-center justify-between p-4 transition hover:bg-gray-800/30">
 									<div>
 										<p class="font-medium text-white">{player.user.name}</p>
@@ -221,7 +222,7 @@
 							</div>
 						{:else}
 							<ul class="divide-y divide-gray-800">
-								{#each waitlist as player, i}
+								{#each waitlist as player, i (player.signup.id)}
 									<li class="flex items-center justify-between p-4 transition hover:bg-gray-800/30">
 										<div class="flex items-center gap-3">
 											<span
@@ -253,7 +254,7 @@
 							class="overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/50 backdrop-blur-xl"
 						>
 							<ul class="divide-y divide-gray-800">
-								{#each withdrawn as player}
+								{#each withdrawn as player (player.signup.id)}
 									<li class="p-4 hover:bg-gray-800/30">
 										<p class="font-medium text-gray-400 line-through">{player.user.name}</p>
 									</li>

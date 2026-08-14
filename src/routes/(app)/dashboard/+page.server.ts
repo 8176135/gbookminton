@@ -16,7 +16,7 @@ export const load = (async ({ locals }) => {
 	const now = new Date();
 
 	// Get invited plus-ones
-	let invitedPlusOnes: any[] = [];
+	let invitedPlusOnes: Array<{ id: string; name: string; email: string; balance: number }> = [];
 	if (currentUser.accountType === 'company' || currentUser.role === 'admin') {
 		invitedPlusOnes = await db
 			.select({
@@ -159,7 +159,11 @@ export const actions: Actions = {
 		if (!ev) return { error: 'Event not found', eventId, targetUserId: targetUserId || null };
 
 		if (new Date(ev.deadline).getTime() < Date.now()) {
-			return { error: 'Registration deadline has passed', eventId, targetUserId: targetUserId || null };
+			return {
+				error: 'Registration deadline has passed',
+				eventId,
+				targetUserId: targetUserId || null
+			};
 		}
 
 		const [currentUser] = await db.select().from(user).where(eq(user.id, session.user.id)).limit(1);
