@@ -264,20 +264,32 @@ pnpm reset-password
 pnpm reset-password <email> <new-password>
 ```
 
-#### Generate Test Events (`scripts/generate-test-events.ts`)
+#### Generate Test Events / Demo Seeder (`scripts/generate-test-events.ts`)
 
-Populates the database with test events across different time categories (past, currently happening, upcoming) to help test UI and deadlines:
+Interactive demo-data seeder for a fresh database. Creates an admin account plus a batch of Company / Plus One member accounts, a handful of events (some past, some upcoming), a recurring weekly series spanning a couple of weeks, and signups on those events — including balance deductions and `signup_deduction` audit transactions on past (locked) events, mirroring the real deadline processor.
+
+Every setting is prompted with a sensible default (press [Enter] to accept):
+
+- **Setup**: reset (wipe) existing demo data first
+- **Accounts**: admin name/email/password, company email domain, number of Company and Plus One members, shared member password, per-member starting balance
+- **Events**: past / upcoming one-off event counts, weekly recurrences, capacity, duration, deadline (hours before), Company & Plus One pricing, visibility (onlyCompany/public/private)
+- **Signups**: whether to create signups and how many per event (0 = every member)
 
 ```bash
-# Interactive mode
+# Interactive walk-through (defaults in brackets)
 pnpm generate-test-events
 
-# Specify events per category
-pnpm generate-test-events --count 5
+# Run with all defaults, no prompts
+pnpm generate-test-events --yes
 
-# Dry-run mode (prints SQL only, does not write to database)
+# Print the plan without writing anything
 pnpm generate-test-events --dry-run
+
+# Plan only, with defaults
+pnpm generate-test-events --dry-run --yes
 ```
+
+Created accounts are credential logins with `emailVerified` set, so they can sign in immediately. Finishes by printing the admin login and member credentials.
 
 #### Credit User Balance (`scripts/add-funds.ts`)
 
